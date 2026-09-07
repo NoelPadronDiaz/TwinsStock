@@ -79,27 +79,37 @@ mismo repositorio de Git, cada uno con su propio "Root Directory".
 
 ### Backend (`backend/`)
 
-1. En Vercel, "Add New Project" → importa este repo → **Root Directory:
-   `backend`**. Framework preset: "Other" (no hace falta tocar build/output).
+1. En Vercel, "Add New Project" → importa este repo → en **Settings → General
+   → Root Directory** pon `backend` (**imprescindible**: si se deja en `.`,
+   Vercel construye desde la raíz del monorepo, no encuentra nada y todo da
+   404).
 2. `backend/api/index.ts` es el entrypoint serverless: arranca Nest sobre un
    adaptador Express y reutiliza la instancia entre invocaciones (evita
    reconectar a la base de datos en cada request). `backend/vercel.json`
-   reescribe cualquier ruta hacia esa función.
+   reescribe cualquier ruta hacia esa función y además pone `buildCommand: ""`
+   — sin eso, Vercel ejecuta `npm run build` (`nest build`) y luego falla
+   porque espera una carpeta `public` de salida que un proyecto solo-API no
+   tiene.
 3. Variables de entorno del proyecto (Settings → Environment Variables):
    - `DATABASE_URL`: el connection string **pooled** de Neon (el que trae
      `-pooler` en el host), imprescindible en serverless para no agotar
-     conexiones.
+     conexiones. Si conectaste la integración Neon↔Vercel, ya está puesta
+     automáticamente.
    - `CORS_ORIGIN`: la URL del frontend desplegado (p. ej.
      `https://twinsstock.vercel.app`).
 4. Despliega. La API queda en `https://<tu-backend>.vercel.app/api/...`.
 
 ### Frontend (`frontend/`)
 
-1. "Add New Project" → mismo repo → **Root Directory: `frontend`**. Vercel
-   detecta Vite automáticamente.
+1. "Add New Project" → mismo repo → **Root Directory: `frontend`** (mismo
+   motivo que arriba). Vercel detecta Vite automáticamente.
 2. Variable de entorno: `VITE_API_URL` = `https://<tu-backend>.vercel.app/api`.
 3. `frontend/vercel.json` hace fallback a `index.html` para que las rutas de
    React Router (`/dashboard`) funcionen al recargar o enlazar directo.
+
+Si al desplegar da `404: NOT_FOUND` en todas las rutas, casi seguro es el
+Root Directory sin configurar (Settings → General → Root Directory, en cada
+proyecto) — es la causa más común.
 
 ## Notas
 

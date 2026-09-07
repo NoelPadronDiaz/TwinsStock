@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { CategoriesModule } from './categories/categories.module';
 import { ConsumablesModule } from './consumables/consumables.module';
 import { ConsumptionLogsModule } from './consumption-logs/consumption-logs.module';
 import { StatsModule } from './stats/stats.module';
@@ -31,6 +32,7 @@ import { StatsModule } from './stats/stats.module';
         } as TypeOrmModuleOptions;
       },
     }),
+    CategoriesModule,
     ConsumablesModule,
     ConsumptionLogsModule,
     StatsModule,

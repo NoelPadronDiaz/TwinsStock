@@ -108,16 +108,32 @@ body {
   margin-top: 0;
 }
 
-.consumable-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+.category-group {
+  margin-top: 20px;
+}
+
+.category-group:first-child {
   margin-top: 16px;
 }
 
+.category-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--secondary-ink);
+  margin: 0 0 8px;
+}
+
+.consumable-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
 .consumable-button {
-  padding: 28px 16px;
-  font-size: 16px;
+  padding: 16px 12px;
+  font-size: 14px;
   font-weight: 600;
   border-radius: 12px;
   border: 1px solid var(--border);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Consumable,
   ConsumptionLog,
@@ -11,6 +11,19 @@ const dateFormatter = new Intl.DateTimeFormat('es-ES', {
   dateStyle: 'medium',
   timeStyle: 'short',
 });
+
+function groupByCategory(consumables: Consumable[]) {
+  const groups = new Map<string, { name: string; items: Consumable[] }>();
+  for (const consumable of consumables) {
+    const key = consumable.categoryId ?? 'none';
+    const name = consumable.category?.name ?? 'Otros';
+    if (!groups.has(key)) {
+      groups.set(key, { name, items: [] });
+    }
+    groups.get(key)!.items.push(consumable);
+  }
+  return [...groups.values()];
+}
 
 export default function RegisterPage() {
   const [consumables, setConsumables] = useState<Consumable[]>([]);
@@ -44,6 +57,8 @@ export default function RegisterPage() {
     }
   };
 
+  const categoryGroups = useMemo(() => groupByCategory(consumables), [consumables]);
+
   if (loading) {
     return <p>Cargando...</p>;
   }
@@ -53,18 +68,23 @@ export default function RegisterPage() {
       <section>
         <h2>¿Qué acabas de abrir?</h2>
         <p className="hint">Toca un producto para registrar que se ha abierto ahora mismo.</p>
-        <div className="consumable-grid">
-          {consumables.map((consumable) => (
-            <button
-              key={consumable.id}
-              className="consumable-button"
-              disabled={registeringId === consumable.id}
-              onClick={() => handleRegister(consumable)}
-            >
-              {registeringId === consumable.id ? 'Guardando...' : consumable.name}
-            </button>
-          ))}
-        </div>
+        {categoryGroups.map((group) => (
+          <div className="category-group" key={group.name}>
+            <h3 className="category-title">{group.name}</h3>
+            <div className="consumable-grid">
+              {group.items.map((consumable) => (
+                <button
+                  key={consumable.id}
+                  className="consumable-button"
+                  disabled={registeringId === consumable.id}
+                  onClick={() => handleRegister(consumable)}
+                >
+                  {registeringId === consumable.id ? 'Guardando...' : consumable.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
         {feedback && <div className="feedback">{feedback}</div>}
       </section>
 

@@ -33,14 +33,22 @@ npm install
 npm run start:dev
 ```
 
-La API queda en `http://localhost:3000/api`. Al arrancar, si la tabla de
-consumibles está vacía, se crean automáticamente:
+La API queda en `http://localhost:3000/api`. Al arrancar, se crean/actualizan
+automáticamente las 4 categorías y sus productos (ver `DEFAULT_CATALOG` en
+`backend/src/consumables/consumables.service.ts`):
 
-- Granola
-- Leche en polvo
-- Crema de lotus
-- Crema de pistacho
-- Crema de cacahuete
+- **Líquidos y Cremas**: Pistacho, Cacahuete, Cacao, Dulce de Leche (tarrina/fácil),
+  Leche Condensada (lata/fácil), Crema de Maracuyá, Nata, Leche de Coco, Leche
+  Sin Lactosa, Leche de Avena, Agua.
+- **Productos secos**: CornFlakes, Granola, Granola de Chocolate, Galleta
+  Salada, Galleta María, Leche en polvo, Pepitas de chocolate (negro/blanco),
+  Pistacho Crunchi, Coco Rallado, Cacahuetes, Proteina y semillas de chía.
+- **Congelados**: Piña, Mango, Açai 2'9l, Açai 280ml.
+- **Consumibles**: vasos (375/500 con logo, 500 sin logo, grandes para
+  llevar), tapas, cucharas, servilletas.
+
+Un producto que se quita del catálogo (editando `DEFAULT_CATALOG`) no se
+borra: se marca `active: false` para no perder su historial de consumos.
 
 ### 3. Frontend
 
@@ -64,8 +72,9 @@ La app queda en `http://localhost:5173`.
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/api/consumables` | Lista consumibles activos |
-| POST | `/api/consumables` | Crea un nuevo consumible |
+| GET | `/api/categories` | Lista categorías, ordenadas |
+| GET | `/api/consumables` | Lista consumibles activos con su categoría, ordenados por categoría y posición |
+| POST | `/api/consumables` | Crea un nuevo consumible (`name`, `categoryId`) |
 | PATCH | `/api/consumables/:id` | Activa/desactiva un consumible |
 | POST | `/api/consumption-logs` | Registra un consumo (`consumableId`) |
 | GET | `/api/consumption-logs` | Lista registros recientes (filtros: `from`, `to`, `consumableId`, `limit`) |

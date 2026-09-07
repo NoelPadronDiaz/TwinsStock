@@ -14,7 +14,7 @@ export class ConsumablesController {
 
   @Post()
   create(@Body() dto: CreateConsumableDto) {
-    return this.consumablesService.create(dto.name);
+    return this.consumablesService.create(dto.name, dto.categoryId);
   }
 
   @Patch(':id')

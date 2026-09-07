@@ -4,10 +4,19 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
 });
 
+export interface Category {
+  id: string;
+  name: string;
+  position: number;
+}
+
 export interface Consumable {
   id: string;
   name: string;
   active: boolean;
+  position: number;
+  categoryId: string | null;
+  category?: Category | null;
 }
 
 export interface ConsumptionLog {
@@ -33,6 +42,8 @@ export interface StatsTimeseriesRow {
 }
 
 export const fetchConsumables = () => api.get<Consumable[]>('/consumables').then((res) => res.data);
+
+export const fetchCategories = () => api.get<Category[]>('/categories').then((res) => res.data);
 
 export const registerConsumption = (consumableId: string) =>
   api.post<ConsumptionLog>('/consumption-logs', { consumableId }).then((res) => res.data);

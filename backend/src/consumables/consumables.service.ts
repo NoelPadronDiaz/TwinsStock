@@ -1,14 +1,61 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CategoriesService } from '../categories/categories.service';
 import { Consumable } from './consumable.entity';
 
-const DEFAULT_CONSUMABLES = [
-  'Granola',
-  'Leche en polvo',
-  'Crema de lotus',
-  'Crema de pistacho',
-  'Crema de cacahuete',
+const DEFAULT_CATALOG: { category: string; products: string[] }[] = [
+  {
+    category: 'Líquidos y Cremas',
+    products: [
+      'Pistacho',
+      'Cacahuete',
+      'Cacao',
+      'Dulce de Leche (tarrina)',
+      'Dulce de Leche (fácil)',
+      'Leche Condensada (lata)',
+      'Leche Condensada (fácil)',
+      'Crema de Maracuyá',
+      'Nata',
+      'Leche de Coco',
+      'Leche Sin Lactosa',
+      'Leche de Avena',
+      'Agua',
+    ],
+  },
+  {
+    category: 'Productos secos',
+    products: [
+      'CornFlakes',
+      'Granola',
+      'Granola de Chocolate',
+      'Galleta Salada',
+      'Galleta María',
+      'Leche en polvo',
+      'Pepitas de chocolate negro',
+      'Pepitas de chocolate blanco',
+      'Pistacho Crunchi',
+      'Coco Rallado',
+      'Cacahuetes',
+      'Proteina y semillas de chía',
+    ],
+  },
+  {
+    category: 'Congelados',
+    products: ['Piña', 'Mango', "Açai 2'9l", 'Açai 280ml'],
+  },
+  {
+    category: 'Consumibles',
+    products: [
+      'Paquete de vasos 375 con logo',
+      'Paquete de vasos 500 con logo',
+      'Paquete de vasos 500 sin logo',
+      'Vasos grandes para llevar',
+      'Tapas',
+      'Cucharas',
+      'Servilletas',
+    ],
+  },
 ];
 
 @Injectable()
@@ -16,6 +63,7 @@ export class ConsumablesService implements OnModuleInit {
   constructor(
     @InjectRepository(Consumable)
     private readonly consumablesRepository: Repository<Consumable>,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   async onModuleInit() {
@@ -23,27 +71,70 @@ export class ConsumablesService implements OnModuleInit {
   }
 
   private async seedDefaults() {
-    for (const name of DEFAULT_CONSUMABLES) {
-      const exists = await this.consumablesRepository.findOne({ where: { name } });
-      if (!exists) {
-        await this.consumablesRepository.save(this.consumablesRepository.create({ name }));
+    const categories = await this.categoriesService.ensureSeeded();
+    const categoryByName = new Map(categories.map((c) => [c.name, c]));
+
+    const canonicalNames = new Set<string>();
+    let position = 0;
+
+    for (const { category, products } of DEFAULT_CATALOG) {
+      const categoryEntity = categoryByName.get(category);
+      for (const name of products) {
+        canonicalNames.add(name);
+        const existing = await this.consumablesRepository.findOne({ where: { name } });
+        if (existing) {
+          existing.categoryId = categoryEntity?.id ?? null;
+          existing.position = position;
+          existing.active = true;
+          await this.consumablesRepository.save(existing);
+        } else {
+          await this.consumablesRepository.save(
+            this.consumablesRepository.create({
+              name,
+              categoryId: categoryEntity?.id ?? null,
+              position,
+              active: true,
+            }),
+          );
+        }
+        position++;
+      }
+    }
+
+    const all = await this.consumablesRepository.find();
+    for (const consumable of all) {
+      if (!canonicalNames.has(consumable.name) && consumable.active) {
+        consumable.active = false;
+        await this.consumablesRepository.save(consumable);
       }
     }
   }
 
   findAll(includeInactive = false) {
-    return this.consumablesRepository.find({
-      where: includeInactive ? {} : { active: true },
-      order: { name: 'ASC' },
-    });
+    const qb = this.consumablesRepository
+      .createQueryBuilder('consumable')
+      .leftJoinAndSelect('consumable.category', 'category')
+      .orderBy('category.position', 'ASC')
+      .addOrderBy('consumable.position', 'ASC');
+
+    if (!includeInactive) {
+      qb.where('consumable.active = :active', { active: true });
+    }
+
+    return qb.getMany();
   }
 
   findOne(id: string) {
-    return this.consumablesRepository.findOneOrFail({ where: { id } });
+    return this.consumablesRepository.findOneOrFail({
+      where: { id },
+      relations: { category: true },
+    });
   }
 
-  create(name: string) {
-    return this.consumablesRepository.save(this.consumablesRepository.create({ name }));
+  create(name: string, categoryId: string) {
+    return this.consumablesRepository.save(
+      this.consumablesRepository.create({ name, categoryId }),
+    );
   }
 
   async setActive(id: string, active: boolean) {

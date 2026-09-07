@@ -6,7 +6,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🍇 TwinsStock</h1>
+        <img src="/logo-twins.png" alt="Twins" className="brand-logo" />
         <nav>
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
             Registrar consumo

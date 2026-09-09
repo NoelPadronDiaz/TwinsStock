@@ -141,4 +141,15 @@ export class ConsumablesService implements OnModuleInit {
     await this.consumablesRepository.update({ id }, { active });
     return this.findOne(id);
   }
+
+  async adjustStock(id: string, delta: number) {
+    await this.consumablesRepository
+      .createQueryBuilder()
+      .update(Consumable)
+      .set({ stock: () => 'GREATEST(stock + :delta, 0)' })
+      .where('id = :id', { id })
+      .setParameter('delta', delta)
+      .execute();
+    return this.findOne(id);
+  }
 }

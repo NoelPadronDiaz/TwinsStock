@@ -99,7 +99,8 @@ body {
   margin-bottom: 32px;
 }
 
-.register-page h2 {
+.register-page h2,
+.stock-page h2 {
   margin-bottom: 4px;
 }
 
@@ -154,6 +155,67 @@ body {
 
 .consumable-button:disabled {
   opacity: 0.6;
+  cursor: default;
+}
+
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.stock-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+}
+
+.stock-card-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.stock-card-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.stock-card-count {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-step-button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--page-plane);
+  color: var(--primary-ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stock-step-button:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+.stock-step-button:disabled {
+  opacity: 0.4;
   cursor: default;
 }
 

@@ -23,6 +23,9 @@ export class Consumable {
   @Column({ default: 0 })
   position: number;
 
+  @Column({ type: 'int', default: 0 })
+  stock: number;
+
   @ManyToOne(() => Category, (category) => category.consumables, {
     nullable: true,
     onDelete: 'SET NULL',

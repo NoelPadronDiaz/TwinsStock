@@ -6,24 +6,12 @@ import {
   fetchRecentLogs,
   registerConsumption,
 } from '../api/client';
+import { groupByCategory } from '../utils/groupByCategory';
 
 const dateFormatter = new Intl.DateTimeFormat('es-ES', {
   dateStyle: 'medium',
   timeStyle: 'short',
 });
-
-function groupByCategory(consumables: Consumable[]) {
-  const groups = new Map<string, { name: string; items: Consumable[] }>();
-  for (const consumable of consumables) {
-    const key = consumable.categoryId ?? 'none';
-    const name = consumable.category?.name ?? 'Otros';
-    if (!groups.has(key)) {
-      groups.set(key, { name, items: [] });
-    }
-    groups.get(key)!.items.push(consumable);
-  }
-  return [...groups.values()];
-}
 
 export default function RegisterPage() {
   const [consumables, setConsumables] = useState<Consumable[]>([]);

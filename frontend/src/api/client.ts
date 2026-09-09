@@ -15,6 +15,7 @@ export interface Consumable {
   name: string;
   active: boolean;
   position: number;
+  stock: number;
   categoryId: string | null;
   category?: Category | null;
 }
@@ -50,6 +51,9 @@ export const registerConsumption = (consumableId: string) =>
 
 export const fetchRecentLogs = (limit = 10) =>
   api.get<ConsumptionLog[]>('/consumption-logs', { params: { limit } }).then((res) => res.data);
+
+export const adjustStock = (consumableId: string, delta: number) =>
+  api.patch<Consumable>(`/consumables/${consumableId}/stock`, { delta }).then((res) => res.data);
 
 export const fetchStatsSummary = (from?: string, to?: string) =>
   api.get<StatsSummaryRow[]>('/stats/summary', { params: { from, to } }).then((res) => res.data);

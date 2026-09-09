@@ -63,8 +63,13 @@ La app queda en `http://localhost:5173`.
 
 ## Funcionalidad
 
-- **Registrar consumo** (`/`): botones grandes por producto para marcar que se
-  ha abierto una unidad; queda registrada la fecha y hora exactas.
+- **Registrar consumo** (`/`): botones grandes por producto, agrupados por
+  categoría, para marcar que se ha abierto una unidad; queda registrada la
+  fecha y hora exactas y **resta 1 del stock** de ese producto.
+- **Control de stock** (`/stock`): mismo agrupado por categoría, mostrando las
+  unidades actuales de cada producto con botones +/− para ajustarlas
+  manualmente (reponer, corregir un conteo, etc.). Restar aquí **no** cuenta
+  como consumo — para eso está "Registrar consumo".
 - **Panel de control** (`/dashboard`): totales por producto, tendencia en el
   tiempo (día/semana/mes) y tabla de datos, con filtros de rango de fechas.
 
@@ -76,7 +81,8 @@ La app queda en `http://localhost:5173`.
 | GET | `/api/consumables` | Lista consumibles activos con su categoría, ordenados por categoría y posición |
 | POST | `/api/consumables` | Crea un nuevo consumible (`name`, `categoryId`) |
 | PATCH | `/api/consumables/:id` | Activa/desactiva un consumible |
-| POST | `/api/consumption-logs` | Registra un consumo (`consumableId`) |
+| PATCH | `/api/consumables/:id/stock` | Ajusta el stock (`delta`, positivo o negativo; nunca baja de 0) |
+| POST | `/api/consumption-logs` | Registra un consumo (`consumableId`) y resta 1 del stock |
 | GET | `/api/consumption-logs` | Lista registros recientes (filtros: `from`, `to`, `consumableId`, `limit`) |
 | GET | `/api/stats/summary` | Totales por producto en un rango (`from`, `to`) |
 | GET | `/api/stats/timeseries` | Serie temporal por producto (`from`, `to`, `groupBy=day\|week\|month`) |

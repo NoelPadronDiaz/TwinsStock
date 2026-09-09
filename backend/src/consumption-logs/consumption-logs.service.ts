@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
+import { ConsumablesService } from '../consumables/consumables.service';
 import { ConsumptionLog } from './consumption-log.entity';
 import { CreateConsumptionLogDto } from './dto/create-consumption-log.dto';
 
@@ -16,14 +17,17 @@ export class ConsumptionLogsService {
   constructor(
     @InjectRepository(ConsumptionLog)
     private readonly logsRepository: Repository<ConsumptionLog>,
+    private readonly consumablesService: ConsumablesService,
   ) {}
 
-  create(dto: CreateConsumptionLogDto) {
+  async create(dto: CreateConsumptionLogDto) {
     const log = this.logsRepository.create({
       consumableId: dto.consumableId,
       consumedAt: dto.consumedAt ? new Date(dto.consumedAt) : new Date(),
     });
-    return this.logsRepository.save(log);
+    const saved = await this.logsRepository.save(log);
+    await this.consumablesService.adjustStock(dto.consumableId, -1);
+    return saved;
   }
 
   findAll(query: FindLogsQuery) {

@@ -50,6 +50,11 @@ automáticamente las 4 categorías y sus productos (ver `DEFAULT_CATALOG` en
 Un producto que se quita del catálogo (editando `DEFAULT_CATALOG`) no se
 borra: se marca `active: false` para no perder su historial de consumos.
 
+Si la tabla de usuarios está vacía, también se crea un usuario **admin**
+inicial usando `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_NAME` de `.env`
+(si `ADMIN_PASSWORD` no está definida, no se crea ninguno y no podrás
+entrar — mira el log del backend al arrancar).
+
 ### 3. Frontend
 
 ```bash
@@ -63,6 +68,11 @@ La app queda en `http://localhost:5173`.
 
 ## Funcionalidad
 
+- **Login** (`/login`): no se puede usar la app sin iniciar sesión. Los
+  registros de usuario los crea un administrador desde "Usuarios" — no hay
+  auto-registro.
+- **Usuarios** (`/users`, solo administradores): crear cuentas de empleado,
+  cambiar el rol, activar/desactivar.
 - **Registrar consumo** (`/`): botones grandes por producto, agrupados por
   categoría, para marcar que se ha abierto una unidad; queda registrada la
   fecha y hora exactas y **resta 1 del stock** de ese producto.
@@ -75,8 +85,15 @@ La app queda en `http://localhost:5173`.
 
 ## API
 
+Todas las rutas requieren un JWT (`Authorization: Bearer <token>`) **salvo**
+`POST /api/auth/login`. Las de `/api/users` además requieren rol `admin`.
+
 | Método | Ruta | Descripción |
 |---|---|---|
+| POST | `/api/auth/login` | `{ username, password }` → `{ accessToken, user }` |
+| GET | `/api/users` | Lista usuarios (solo admin) |
+| POST | `/api/users` | Crea un usuario (solo admin): `username`, `name`, `password`, `role` |
+| PATCH | `/api/users/:id` | Actualiza `name`/`role`/`active`/`password` (solo admin) |
 | GET | `/api/categories` | Lista categorías, ordenadas |
 | GET | `/api/consumables` | Lista consumibles activos con su categoría, ordenados por categoría y posición |
 | POST | `/api/consumables` | Crea un nuevo consumible (`name`, `categoryId`) |
@@ -112,6 +129,11 @@ mismo repositorio de Git, cada uno con su propio "Root Directory".
      automáticamente.
    - `CORS_ORIGIN`: la URL del frontend desplegado (p. ej.
      `https://twinsstock.vercel.app`).
+   - `JWT_SECRET`: una cadena aleatoria larga (p. ej. `openssl rand -hex 32`).
+     **Imprescindible cambiarla** del valor de ejemplo.
+   - `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_NAME`: credenciales del
+     admin inicial. Solo se usan la primera vez (tabla de usuarios vacía);
+     después, cambia la contraseña desde la propia app.
 4. Despliega. La API queda en `https://<tu-backend>.vercel.app/api/...`.
 
 ### Frontend (`frontend/`)

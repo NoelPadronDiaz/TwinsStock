@@ -89,6 +89,156 @@ body {
   color: var(--accent-ink);
 }
 
+.nav-user {
+  margin-left: 8px;
+  padding: 8px 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nav-logout {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nav-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-black);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--chart-surface);
+}
+
+.login-logo {
+  height: 40px;
+  align-self: center;
+  margin-bottom: 4px;
+}
+
+.login-card h1 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  text-align: center;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary-ink);
+}
+
+.login-field input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--page-plane);
+  color: var(--primary-ink);
+  font-size: 14px;
+}
+
+.login-error {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #d0393922;
+  color: var(--primary-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.login-submit {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.login-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.user-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.user-form input,
+.user-form select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+  font-size: 14px;
+}
+
+.user-form button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.user-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.feedback-error {
+  background: #d0393922;
+}
+
+.users-page .stats-table select {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+}
+
+.users-page .stats-table button {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+  cursor: pointer;
+}
+
 .app-main {
   max-width: 960px;
   margin: 0 auto;

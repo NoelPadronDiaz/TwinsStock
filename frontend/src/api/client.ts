@@ -4,6 +4,62 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
 });
 
+export type UserRole = 'admin' | 'employee';
+
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  role: UserRole;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  user: User;
+}
+
+const AUTH_STORAGE_KEY = 'twinsstock_auth';
+
+export function getStoredAuth(): AuthResponse | null {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as AuthResponse) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredAuth(auth: AuthResponse) {
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
+}
+
+export function clearStoredAuth() {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+export const UNAUTHORIZED_EVENT = 'twinsstock:unauthorized';
+
+api.interceptors.request.use((config) => {
+  const token = getStoredAuth()?.accessToken;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearStoredAuth();
+      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+    }
+    return Promise.reject(error);
+  },
+);
+
 export interface Category {
   id: string;
   name: string;
@@ -62,3 +118,28 @@ export const fetchStatsTimeseries = (from: string, to: string, groupBy: 'day' | 
   api
     .get<StatsTimeseriesRow[]>('/stats/timeseries', { params: { from, to, groupBy } })
     .then((res) => res.data);
+
+export const login = (username: string, password: string) =>
+  api.post<AuthResponse>('/auth/login', { username, password }).then((res) => res.data);
+
+export const fetchUsers = () => api.get<User[]>('/users').then((res) => res.data);
+
+export interface CreateUserInput {
+  username: string;
+  name: string;
+  password: string;
+  role: UserRole;
+}
+
+export const createUser = (input: CreateUserInput) =>
+  api.post<User>('/users', input).then((res) => res.data);
+
+export interface UpdateUserInput {
+  name?: string;
+  role?: UserRole;
+  active?: boolean;
+  password?: string;
+}
+
+export const updateUser = (id: string, input: UpdateUserInput) =>
+  api.patch<User>(`/users/${id}`, input).then((res) => res.data);

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adjustStock, Consumable, fetchConsumables } from '../api/client';
+import { getCategoryIcon } from '../utils/categoryIcons';
 import { groupByCategory } from '../utils/groupByCategory';
 
 export default function StockPage() {
@@ -39,7 +40,12 @@ export default function StockPage() {
       </p>
       {categoryGroups.map((group) => (
         <div className="category-group" key={group.name}>
-          <h3 className="category-title">{group.name}</h3>
+          <h3 className="category-title">
+            <span className="category-icon" aria-hidden="true">
+              {getCategoryIcon(group.name)}
+            </span>
+            {group.name}
+          </h3>
           <div className="stock-grid">
             {group.items.map((consumable) => (
               <div className="stock-card" key={consumable.id}>

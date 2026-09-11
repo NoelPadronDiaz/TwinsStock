@@ -102,6 +102,7 @@ export type StockStatus = 'in' | 'out';
 
 export interface ConsumablesFilter {
   includeInactive?: boolean;
+  active?: boolean;
   categoryId?: string;
   stockStatus?: StockStatus;
 }
@@ -111,6 +112,7 @@ export const fetchConsumables = (filter: ConsumablesFilter = {}) =>
     .get<Consumable[]>('/consumables', {
       params: {
         includeInactive: filter.includeInactive ? 'true' : undefined,
+        active: filter.active === undefined ? undefined : String(filter.active),
         categoryId: filter.categoryId || undefined,
         stockStatus: filter.stockStatus,
       },
@@ -142,8 +144,27 @@ export const deleteConsumable = (id: string) =>
 export const registerConsumption = (consumableId: string) =>
   api.post<ConsumptionLog>('/consumption-logs', { consumableId }).then((res) => res.data);
 
-export const fetchRecentLogs = (limit = 10) =>
-  api.get<ConsumptionLog[]>('/consumption-logs', { params: { limit } }).then((res) => res.data);
+export interface ConsumptionLogsFilter {
+  limit?: number;
+  from?: string;
+  to?: string;
+  consumableId?: string;
+}
+
+export const fetchConsumptionLogs = (filter: ConsumptionLogsFilter = {}) =>
+  api
+    .get<ConsumptionLog[]>('/consumption-logs', {
+      params: {
+        limit: filter.limit,
+        from: filter.from,
+        to: filter.to,
+        consumableId: filter.consumableId || undefined,
+      },
+    })
+    .then((res) => res.data);
+
+export const deleteConsumptionLog = (id: string) =>
+  api.delete<void>(`/consumption-logs/${id}`).then((res) => res.data);
 
 export const adjustStock = (consumableId: string, delta: number) =>
   api.patch<Consumable>(`/consumables/${consumableId}/stock`, { delta }).then((res) => res.data);

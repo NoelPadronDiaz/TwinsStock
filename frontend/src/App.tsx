@@ -3,6 +3,7 @@ import AdminRoute from './components/AdminRoute';
 import ProtectedLayout from './components/ProtectedLayout';
 import { AuthProvider } from './auth/AuthContext';
 import DashboardPage from './pages/DashboardPage';
+import HistoryPage from './pages/HistoryPage';
 import LoginPage from './pages/LoginPage';
 import ProductsPage from './pages/ProductsPage';
 import RegisterPage from './pages/RegisterPage';
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/" element={<RegisterPage />} />
           <Route path="/stock" element={<StockPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/history" element={<HistoryPage />} />
           <Route
             path="/products"
             element={

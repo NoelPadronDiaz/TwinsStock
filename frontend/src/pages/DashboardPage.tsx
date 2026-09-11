@@ -218,37 +218,39 @@ export default function DashboardPage() {
 
           <section className="chart-card">
             <h2>Tabla de datos</h2>
-            <table className="stats-table">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Unidades</th>
-                  <th>Último consumo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.map((row) => (
-                  <tr key={row.consumableId}>
-                    <td>{row.consumableName}</td>
-                    <td>{row.count}</td>
-                    <td>
-                      {row.lastConsumedAt
-                        ? new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(
-                            new Date(row.lastConsumedAt),
-                          )
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-                {summary.length === 0 && (
+            <div className="table-scroll">
+              <table className="stats-table">
+                <thead>
                   <tr>
-                    <td colSpan={3} className="empty">
-                      Sin datos en este rango.
-                    </td>
+                    <th>Producto</th>
+                    <th>Unidades</th>
+                    <th>Último consumo</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {summary.map((row) => (
+                    <tr key={row.consumableId}>
+                      <td>{row.consumableName}</td>
+                      <td>{row.count}</td>
+                      <td>
+                        {row.lastConsumedAt
+                          ? new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(
+                              new Date(row.lastConsumedAt),
+                            )
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                  {summary.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="empty">
+                        Sin datos en este rango.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </section>
         </>
       )}

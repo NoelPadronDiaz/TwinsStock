@@ -12,11 +12,13 @@ export class ConsumablesController {
   @Get()
   findAll(
     @Query('includeInactive') includeInactive?: string,
+    @Query('active') active?: string,
     @Query('categoryId') categoryId?: string,
     @Query('stockStatus') stockStatus?: 'in' | 'out',
   ) {
     return this.consumablesService.findAll({
       includeInactive: includeInactive === 'true',
+      active: active === undefined ? undefined : active === 'true',
       categoryId,
       stockStatus,
     });

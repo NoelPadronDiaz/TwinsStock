@@ -9,13 +9,21 @@ import {
   StockStatus,
   updateConsumable,
 } from '../api/client';
+import { CloseIcon, EditIcon, PowerIcon, TrashIcon } from '../components/icons';
 
 type StockFilter = 'all' | StockStatus;
+type ActiveFilter = 'all' | 'active' | 'inactive';
 
 const STOCK_FILTERS: { value: StockFilter; label: string }[] = [
   { value: 'all', label: 'Todos' },
   { value: 'in', label: 'En stock' },
   { value: 'out', label: 'Sin stock' },
+];
+
+const ACTIVE_FILTERS: { value: ActiveFilter; label: string }[] = [
+  { value: 'all', label: 'Todos' },
+  { value: 'active', label: 'Activos' },
+  { value: 'inactive', label: 'Inactivos' },
 ];
 
 const emptyForm = { name: '', categoryId: '' };
@@ -27,14 +35,16 @@ export default function ProductsPage() {
 
   const [categoryFilter, setCategoryFilter] = useState('');
   const [stockFilter, setStockFilter] = useState<StockFilter>('all');
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
 
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [modalProduct, setModalProduct] = useState<Consumable | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [actionPending, setActionPending] = useState(false);
 
   useEffect(() => {
     fetchCategories().then(setCategories);
@@ -43,6 +53,7 @@ export default function ProductsPage() {
   const loadProducts = () =>
     fetchConsumables({
       includeInactive: true,
+      active: activeFilter === 'all' ? undefined : activeFilter === 'active',
       categoryId: categoryFilter || undefined,
       stockStatus: stockFilter === 'all' ? undefined : stockFilter,
     }).then(setProducts);
@@ -51,7 +62,21 @@ export default function ProductsPage() {
     setLoading(true);
     loadProducts().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFilter, stockFilter]);
+  }, [categoryFilter, stockFilter, activeFilter]);
+
+  useEffect(() => {
+    if (!modalProduct) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeModal();
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalProduct]);
 
   const handleCreate = async (event: FormEvent) => {
     event.preventDefault();
@@ -68,52 +93,58 @@ export default function ProductsPage() {
     }
   };
 
-  const startEdit = (product: Consumable) => {
-    setEditingId(product.id);
+  const openModal = (product: Consumable) => {
+    setModalProduct(product);
     setEditForm({ name: product.name, categoryId: product.categoryId ?? '' });
-    setError(null);
+    setModalError(null);
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
+  const closeModal = () => {
+    setModalProduct(null);
     setEditForm(emptyForm);
+    setModalError(null);
   };
 
-  const saveEdit = async (id: string) => {
-    setError(null);
-    setPendingId(id);
+  const handleSave = async () => {
+    if (!modalProduct) return;
+    setModalError(null);
+    setActionPending(true);
     try {
-      await updateConsumable(id, { name: editForm.name, categoryId: editForm.categoryId });
+      await updateConsumable(modalProduct.id, { name: editForm.name, categoryId: editForm.categoryId });
       await loadProducts();
-      cancelEdit();
+      closeModal();
     } catch (err: any) {
-      setError(err.response?.data?.message ?? 'No se ha podido guardar el producto.');
+      setModalError(err.response?.data?.message ?? 'No se ha podido guardar el producto.');
     } finally {
-      setPendingId(null);
+      setActionPending(false);
     }
   };
 
-  const toggleActive = async (product: Consumable) => {
-    setPendingId(product.id);
+  const handleToggleActive = async () => {
+    if (!modalProduct) return;
+    setActionPending(true);
     try {
-      await updateConsumable(product.id, { active: !product.active });
+      const updated = await updateConsumable(modalProduct.id, { active: !modalProduct.active });
+      setModalProduct(updated);
       await loadProducts();
     } finally {
-      setPendingId(null);
+      setActionPending(false);
     }
   };
 
-  const handleDelete = async (product: Consumable) => {
+  const handleDelete = async () => {
+    if (!modalProduct) return;
     const confirmed = window.confirm(
-      `¿Borrar "${product.name}" definitivamente? Se perderá también su historial de consumos. Esta acción no se puede deshacer.`,
+      `¿Borrar "${modalProduct.name}" definitivamente? Se perderá también su historial de consumos. Esta acción no se puede deshacer.`,
     );
     if (!confirmed) return;
-    setPendingId(product.id);
+    setActionPending(true);
     try {
-      await deleteConsumable(product.id);
+      await deleteConsumable(modalProduct.id);
       await loadProducts();
+      closeModal();
     } finally {
-      setPendingId(null);
+      setActionPending(false);
     }
   };
 
@@ -124,7 +155,7 @@ export default function ProductsPage() {
   return (
     <div className="products-page">
       <h2>Gestión de productos</h2>
-      <p className="hint">Crea, edita, desactiva o borra productos del catálogo.</p>
+      <p className="hint">Crea productos y toca el icono de editar para gestionarlos.</p>
 
       <form className="user-form" onSubmit={handleCreate}>
         <input
@@ -177,83 +208,127 @@ export default function ProductsPage() {
             </button>
           ))}
         </div>
+        <div className="preset-group">
+          {ACTIVE_FILTERS.map((option) => (
+            <button
+              key={option.value}
+              className={activeFilter === option.value ? 'preset-button active' : 'preset-button'}
+              onClick={() => setActiveFilter(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <table className="stats-table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Stock</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map((product) => (
-            <tr key={product.id}>
-              {editingId === product.id ? (
-                <>
-                  <td>
-                    <input
-                      type="text"
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    />
-                  </td>
-                  <td>
-                    <select
-                      value={editForm.categoryId}
-                      onChange={(e) => setEditForm({ ...editForm, categoryId: e.target.value })}
-                    >
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>{product.stock}</td>
-                  <td>{product.active ? 'Activo' : 'Inactivo'}</td>
-                  <td>
-                    <button disabled={pendingId === product.id} onClick={() => saveEdit(product.id)}>
-                      Guardar
-                    </button>{' '}
-                    <button disabled={pendingId === product.id} onClick={cancelEdit}>
-                      Cancelar
-                    </button>
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td>{product.name}</td>
-                  <td>{product.category?.name ?? 'Sin categoría'}</td>
-                  <td>{product.stock}</td>
-                  <td>{product.active ? 'Activo' : 'Inactivo'}</td>
-                  <td>
-                    <button disabled={pendingId === product.id} onClick={() => startEdit(product)}>
-                      Editar
-                    </button>{' '}
-                    <button disabled={pendingId === product.id} onClick={() => toggleActive(product)}>
-                      {product.active ? 'Desactivar' : 'Activar'}
-                    </button>{' '}
-                    <button disabled={pendingId === product.id} onClick={() => handleDelete(product)}>
-                      Borrar
-                    </button>
-                  </td>
-                </>
-              )}
-            </tr>
-          ))}
-          {products.length === 0 && (
+      <div className="table-scroll">
+        <table className="stats-table">
+          <thead>
             <tr>
-              <td colSpan={5} className="empty">
-                Sin productos para estos filtros.
-              </td>
+              <th></th>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Stock</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {products.map((product) => (
+              <tr key={product.id}>
+                <td className="table-actions">
+                  <button className="icon-button" onClick={() => openModal(product)} aria-label={`Editar ${product.name}`} title="Editar">
+                    <EditIcon />
+                  </button>
+                </td>
+                <td>{product.name}</td>
+                <td>{product.category?.name ?? 'Sin categoría'}</td>
+                <td>{product.stock}</td>
+              </tr>
+            ))}
+            {products.length === 0 && (
+              <tr>
+                <td colSpan={4} className="empty">
+                  Sin productos para estos filtros.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {modalProduct && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Editar producto</h3>
+              <button className="modal-close" onClick={closeModal} aria-label="Cerrar">
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <label className="modal-field">
+                Nombre
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                />
+              </label>
+              <label className="modal-field">
+                Categoría
+                <select
+                  value={editForm.categoryId}
+                  onChange={(e) => setEditForm({ ...editForm, categoryId: e.target.value })}
+                >
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="modal-info-row">
+                <span>Stock actual</span>
+                <strong>{modalProduct.stock}</strong>
+              </div>
+              <div className="modal-info-row">
+                <span>Estado</span>
+                <strong>{modalProduct.active ? 'Activo' : 'Inactivo'}</strong>
+              </div>
+            </div>
+
+            {modalError && <div className="feedback feedback-error">{modalError}</div>}
+
+            <div className="modal-actions">
+              <button
+                className="icon-button"
+                disabled={actionPending}
+                onClick={handleToggleActive}
+                aria-label={modalProduct.active ? 'Desactivar' : 'Activar'}
+                title={modalProduct.active ? 'Desactivar' : 'Activar'}
+              >
+                <PowerIcon />
+              </button>
+              <button
+                className="icon-button icon-button-danger"
+                disabled={actionPending}
+                onClick={handleDelete}
+                aria-label="Borrar"
+                title="Borrar"
+              >
+                <TrashIcon />
+              </button>
+              <div className="modal-actions-spacer" />
+              <button className="modal-cancel" disabled={actionPending} onClick={closeModal}>
+                Cancelar
+              </button>
+              <button className="modal-save" disabled={actionPending} onClick={handleSave}>
+                {actionPending ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

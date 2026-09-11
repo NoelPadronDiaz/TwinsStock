@@ -114,46 +114,48 @@ export default function UsersPage() {
       </form>
       {error && <div className="feedback feedback-error">{error}</div>}
 
-      <table className="stats-table">
-        <thead>
-          <tr>
-            <th>Usuario</th>
-            <th>Nombre</th>
-            <th>Rol</th>
-            <th>Estado</th>
-            <th>Creado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.username}</td>
-              <td>{user.name}</td>
-              <td>
-                <select
-                  value={user.role}
-                  disabled={pendingId === user.id}
-                  onChange={(e) => changeRole(user, e.target.value as UserRole)}
-                >
-                  <option value="employee">Empleado</option>
-                  <option value="admin">Administrador</option>
-                </select>
-              </td>
-              <td>{user.active ? 'Activo' : 'Inactivo'}</td>
-              <td>{dateFormatter.format(new Date(user.createdAt))}</td>
-              <td>
-                <button disabled={pendingId === user.id} onClick={() => toggleActive(user)}>
-                  {user.active ? 'Desactivar' : 'Activar'}
-                </button>{' '}
-                <button disabled={pendingId === user.id} onClick={() => resetPassword(user)}>
-                  Cambiar contraseña
-                </button>
-              </td>
+      <div className="table-scroll">
+        <table className="stats-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Nombre</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Creado</th>
+              <th></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.username}</td>
+                <td>{user.name}</td>
+                <td>
+                  <select
+                    value={user.role}
+                    disabled={pendingId === user.id}
+                    onChange={(e) => changeRole(user, e.target.value as UserRole)}
+                  >
+                    <option value="employee">Empleado</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </td>
+                <td>{user.active ? 'Activo' : 'Inactivo'}</td>
+                <td>{dateFormatter.format(new Date(user.createdAt))}</td>
+                <td className="table-actions">
+                  <button disabled={pendingId === user.id} onClick={() => toggleActive(user)}>
+                    {user.active ? 'Desactivar' : 'Activar'}
+                  </button>{' '}
+                  <button disabled={pendingId === user.id} onClick={() => resetPassword(user)}>
+                    Cambiar contraseña
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

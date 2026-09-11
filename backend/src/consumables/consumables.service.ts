@@ -113,6 +113,7 @@ export class ConsumablesService implements OnModuleInit {
   findAll(
     filters: {
       includeInactive?: boolean;
+      active?: boolean;
       categoryId?: string;
       stockStatus?: 'in' | 'out';
     } = {},
@@ -123,7 +124,9 @@ export class ConsumablesService implements OnModuleInit {
       .orderBy('category.position', 'ASC')
       .addOrderBy('consumable.position', 'ASC');
 
-    if (!filters.includeInactive) {
+    if (filters.active !== undefined) {
+      qb.andWhere('consumable.active = :active', { active: filters.active });
+    } else if (!filters.includeInactive) {
       qb.andWhere('consumable.active = :active', { active: true });
     }
     if (filters.categoryId) {

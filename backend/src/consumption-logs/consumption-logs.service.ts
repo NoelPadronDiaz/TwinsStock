@@ -43,13 +43,15 @@ export class ConsumptionLogsService {
 
     return this.logsRepository.find({
       where,
-      relations: { consumable: true },
+      relations: { consumable: { category: true } },
       order: { consumedAt: 'DESC' },
       take: query.limit ?? 50,
     });
   }
 
-  remove(id: string) {
-    return this.logsRepository.delete({ id });
+  async remove(id: string) {
+    const log = await this.logsRepository.findOneOrFail({ where: { id } });
+    await this.logsRepository.delete({ id });
+    await this.consumablesService.adjustStock(log.consumableId, 1);
   }
 }

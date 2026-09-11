@@ -23,6 +23,11 @@ export default function ProtectedLayout() {
             Panel de control
           </NavLink>
           {user.role === 'admin' && (
+            <NavLink to="/products" className={({ isActive }) => (isActive ? 'active' : '')}>
+              Productos
+            </NavLink>
+          )}
+          {user.role === 'admin' && (
             <NavLink to="/users" className={({ isActive }) => (isActive ? 'active' : '')}>
               Usuarios
             </NavLink>

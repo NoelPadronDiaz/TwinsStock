@@ -110,15 +110,29 @@ export class ConsumablesService implements OnModuleInit {
     }
   }
 
-  findAll(includeInactive = false) {
+  findAll(
+    filters: {
+      includeInactive?: boolean;
+      categoryId?: string;
+      stockStatus?: 'in' | 'out';
+    } = {},
+  ) {
     const qb = this.consumablesRepository
       .createQueryBuilder('consumable')
       .leftJoinAndSelect('consumable.category', 'category')
       .orderBy('category.position', 'ASC')
       .addOrderBy('consumable.position', 'ASC');
 
-    if (!includeInactive) {
-      qb.where('consumable.active = :active', { active: true });
+    if (!filters.includeInactive) {
+      qb.andWhere('consumable.active = :active', { active: true });
+    }
+    if (filters.categoryId) {
+      qb.andWhere('consumable.categoryId = :categoryId', { categoryId: filters.categoryId });
+    }
+    if (filters.stockStatus === 'in') {
+      qb.andWhere('consumable.stock > 0');
+    } else if (filters.stockStatus === 'out') {
+      qb.andWhere('consumable.stock <= 0');
     }
 
     return qb.getMany();
@@ -137,9 +151,13 @@ export class ConsumablesService implements OnModuleInit {
     );
   }
 
-  async setActive(id: string, active: boolean) {
-    await this.consumablesRepository.update({ id }, { active });
+  async update(id: string, dto: { name?: string; categoryId?: string; active?: boolean }) {
+    await this.consumablesRepository.update({ id }, dto);
     return this.findOne(id);
+  }
+
+  async remove(id: string) {
+    await this.consumablesRepository.delete({ id });
   }
 
   async adjustStock(id: string, delta: number) {

@@ -222,7 +222,9 @@ body {
   background: #d0393922;
 }
 
-.users-page .stats-table select {
+.users-page .stats-table select,
+.products-page .stats-table select,
+.products-page .stats-table input {
   padding: 4px 6px;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -230,7 +232,8 @@ body {
   color: var(--primary-ink);
 }
 
-.users-page .stats-table button {
+.users-page .stats-table button,
+.products-page .stats-table button {
   padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -250,7 +253,8 @@ body {
 }
 
 .register-page h2,
-.stock-page h2 {
+.stock-page h2,
+.products-page h2 {
   margin-bottom: 4px;
 }
 

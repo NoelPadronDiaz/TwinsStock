@@ -98,9 +98,46 @@ export interface StatsTimeseriesRow {
   count: number;
 }
 
-export const fetchConsumables = () => api.get<Consumable[]>('/consumables').then((res) => res.data);
+export type StockStatus = 'in' | 'out';
+
+export interface ConsumablesFilter {
+  includeInactive?: boolean;
+  categoryId?: string;
+  stockStatus?: StockStatus;
+}
+
+export const fetchConsumables = (filter: ConsumablesFilter = {}) =>
+  api
+    .get<Consumable[]>('/consumables', {
+      params: {
+        includeInactive: filter.includeInactive ? 'true' : undefined,
+        categoryId: filter.categoryId || undefined,
+        stockStatus: filter.stockStatus,
+      },
+    })
+    .then((res) => res.data);
 
 export const fetchCategories = () => api.get<Category[]>('/categories').then((res) => res.data);
+
+export interface CreateConsumableInput {
+  name: string;
+  categoryId: string;
+}
+
+export const createConsumable = (input: CreateConsumableInput) =>
+  api.post<Consumable>('/consumables', input).then((res) => res.data);
+
+export interface UpdateConsumableInput {
+  name?: string;
+  categoryId?: string;
+  active?: boolean;
+}
+
+export const updateConsumable = (id: string, input: UpdateConsumableInput) =>
+  api.patch<Consumable>(`/consumables/${id}`, input).then((res) => res.data);
+
+export const deleteConsumable = (id: string) =>
+  api.delete<void>(`/consumables/${id}`).then((res) => res.data);
 
 export const registerConsumption = (consumableId: string) =>
   api.post<ConsumptionLog>('/consumption-logs', { consumableId }).then((res) => res.data);

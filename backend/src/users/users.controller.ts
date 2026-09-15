@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateThemeDto } from './dto/update-theme.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
@@ -18,6 +20,13 @@ export class UsersController {
   @Post()
   async create(@Body() dto: CreateUserDto) {
     const user = await this.usersService.create(dto);
+    return this.usersService.toSafeUser(user);
+  }
+
+  @Patch('me/theme')
+  @Roles()
+  async updateOwnTheme(@Req() req: Request, @Body() dto: UpdateThemeDto) {
+    const user = await this.usersService.update(req.user!.sub, dto);
     return this.usersService.toSafeUser(user);
   }
 

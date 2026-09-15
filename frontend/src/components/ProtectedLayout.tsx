@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { NavLink, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { MoonIcon, SunIcon } from './icons';
 
 export default function ProtectedLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, setTheme } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   if (!user) {
@@ -47,6 +48,28 @@ export default function ProtectedLayout() {
               Usuarios
             </NavLink>
           )}
+          <div className="theme-switch" role="group" aria-label="Tema">
+            <button
+              type="button"
+              className={user.theme === 'light' ? 'theme-switch-button active' : 'theme-switch-button'}
+              onClick={() => setTheme('light')}
+              aria-pressed={user.theme === 'light'}
+              aria-label="Tema claro"
+              title="Tema claro"
+            >
+              <SunIcon />
+            </button>
+            <button
+              type="button"
+              className={user.theme === 'dark' ? 'theme-switch-button active' : 'theme-switch-button'}
+              onClick={() => setTheme('dark')}
+              aria-pressed={user.theme === 'dark'}
+              aria-label="Tema oscuro"
+              title="Tema oscuro"
+            >
+              <MoonIcon />
+            </button>
+          </div>
           <span className="nav-user">{user.name}</span>
           <button className="nav-logout" onClick={logout}>
             Salir

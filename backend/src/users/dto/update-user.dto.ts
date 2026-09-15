@@ -1,5 +1,5 @@
 import { IsBoolean, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
-import { UserRole } from '../user.entity';
+import { UserRole, UserTheme } from '../user.entity';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -18,4 +18,8 @@ export class UpdateUserDto {
   @IsString()
   @MinLength(6)
   password?: string;
+
+  @IsOptional()
+  @IsIn(['light', 'dark'])
+  theme?: UserTheme;
 }

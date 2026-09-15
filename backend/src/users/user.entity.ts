@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 export type UserRole = 'admin' | 'employee';
+export type UserTheme = 'light' | 'dark';
 
 @Entity('users')
 export class User {
@@ -21,6 +22,9 @@ export class User {
 
   @Column({ default: true })
   active: boolean;
+
+  @Column({ type: 'varchar', default: 'light' })
+  theme: UserTheme;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

@@ -6,13 +6,16 @@ import {
   login as loginRequest,
   setStoredAuth,
   UNAUTHORIZED_EVENT,
+  updateOwnTheme,
   User,
+  UserTheme,
 } from '../api/client';
 
 interface AuthContextValue {
   user: User | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  setTheme: (theme: UserTheme) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -26,6 +29,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
   }, []);
 
+  useEffect(() => {
+    if (auth?.user.theme) {
+      document.documentElement.setAttribute('data-theme', auth.user.theme);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }, [auth?.user.theme]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user: auth?.user ?? null,
@@ -37,6 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout: () => {
         clearStoredAuth();
         setAuth(null);
+      },
+      setTheme: async (theme: UserTheme) => {
+        if (!auth) return;
+        const updatedUser = await updateOwnTheme(theme);
+        const updated = { ...auth, user: updatedUser };
+        setStoredAuth(updated);
+        setAuth(updated);
       },
     }),
     [auth],

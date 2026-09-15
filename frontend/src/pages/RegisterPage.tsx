@@ -8,7 +8,7 @@ import {
   fetchConsumptionLogs,
   registerConsumption,
 } from '../api/client';
-import { TrashIcon } from '../components/icons';
+import { ChevronDownIcon, TrashIcon } from '../components/icons';
 import { getCategoryIcon } from '../utils/categoryIcons';
 import { groupByCategory } from '../utils/groupByCategory';
 
@@ -26,6 +26,7 @@ export default function RegisterPage() {
   const [registeringId, setRegisteringId] = useState<string | null>(null);
   const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const loadData = async () => {
     const [consumablesData, logsData] = await Promise.all([
@@ -70,6 +71,18 @@ export default function RegisterPage() {
     }
   };
 
+  const toggleCategory = (name: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  };
+
   const categoryGroups = useMemo(() => groupByCategory(consumables), [consumables]);
 
   if (loading) {
@@ -81,28 +94,42 @@ export default function RegisterPage() {
       <section>
         <h2>¿Qué acabas de abrir?</h2>
         <p className="hint">Toca un producto para registrar que se ha abierto ahora mismo.</p>
-        {categoryGroups.map((group) => (
-          <div className="category-group" key={group.name}>
-            <h3 className="category-title">
-              <span className="category-icon" aria-hidden="true">
-                {getCategoryIcon(group.name)}
-              </span>
-              {group.name}
-            </h3>
-            <div className="consumable-grid">
-              {group.items.map((consumable) => (
-                <button
-                  key={consumable.id}
-                  className="consumable-button"
-                  disabled={registeringId === consumable.id}
-                  onClick={() => handleRegister(consumable)}
-                >
-                  {registeringId === consumable.id ? 'Guardando...' : consumable.name}
-                </button>
-              ))}
+        {categoryGroups.map((group) => {
+          const isExpanded = expandedCategories.has(group.name);
+          return (
+            <div className="category-group" key={group.name}>
+              <button
+                type="button"
+                className="category-title category-toggle"
+                onClick={() => toggleCategory(group.name)}
+                aria-expanded={isExpanded}
+              >
+                <span className="category-icon" aria-hidden="true">
+                  {getCategoryIcon(group.name)}
+                </span>
+                {group.name}
+                <span className="category-count">{group.items.length}</span>
+                <span className={isExpanded ? 'category-chevron open' : 'category-chevron'} aria-hidden="true">
+                  <ChevronDownIcon />
+                </span>
+              </button>
+              {isExpanded && (
+                <div className="consumable-grid">
+                  {group.items.map((consumable) => (
+                    <button
+                      key={consumable.id}
+                      className="consumable-button"
+                      disabled={registeringId === consumable.id}
+                      onClick={() => handleRegister(consumable)}
+                    >
+                      {registeringId === consumable.id ? 'Guardando...' : consumable.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
         {feedback && <div className="feedback">{feedback}</div>}
       </section>
 

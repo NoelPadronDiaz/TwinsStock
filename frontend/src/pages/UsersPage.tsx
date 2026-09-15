@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { createUser, CreateUserInput, fetchUsers, updateUser, User, UserRole } from '../api/client';
+import { MoonIcon, SunIcon } from '../components/icons';
 
 const dateFormatter = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' });
 
@@ -122,6 +123,7 @@ export default function UsersPage() {
               <th>Nombre</th>
               <th>Rol</th>
               <th>Estado</th>
+              <th>Tema</th>
               <th>Creado</th>
               <th></th>
             </tr>
@@ -142,6 +144,10 @@ export default function UsersPage() {
                   </select>
                 </td>
                 <td>{user.active ? 'Activo' : 'Inactivo'}</td>
+                <td className="theme-cell">
+                  {user.theme === 'dark' ? <MoonIcon /> : <SunIcon />}
+                  {user.theme === 'dark' ? 'Oscuro' : 'Claro'}
+                </td>
                 <td>{dateFormatter.format(new Date(user.createdAt))}</td>
                 <td className="table-actions">
                   <button disabled={pendingId === user.id} onClick={() => toggleActive(user)}>

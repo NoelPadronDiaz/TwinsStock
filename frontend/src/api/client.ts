@@ -5,6 +5,7 @@ export const api = axios.create({
 });
 
 export type UserRole = 'admin' | 'employee';
+export type UserTheme = 'light' | 'dark';
 
 export interface User {
   id: string;
@@ -12,6 +13,7 @@ export interface User {
   name: string;
   role: UserRole;
   active: boolean;
+  theme: UserTheme;
   createdAt: string;
 }
 
@@ -201,3 +203,6 @@ export interface UpdateUserInput {
 
 export const updateUser = (id: string, input: UpdateUserInput) =>
   api.patch<User>(`/users/${id}`, input).then((res) => res.data);
+
+export const updateOwnTheme = (theme: UserTheme) =>
+  api.patch<User>('/users/me/theme', { theme }).then((res) => res.data);

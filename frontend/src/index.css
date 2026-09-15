@@ -10,9 +10,11 @@
   --border: rgba(11, 11, 11, 0.1);
   --brand-black: #0d0d0d;
   --accent: #ffbdd6;
-  --accent-ink: #0d0d0d;
+  --accent-ink: #ffffff;
   --danger: #d03939;
   --danger-ink: #ffffff;
+  --success: #3f8f5f;
+  --success-ink: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -28,9 +30,11 @@
     --border: rgba(255, 255, 255, 0.1);
     --brand-black: #000000;
     --accent: #ffbdd6;
-    --accent-ink: #0d0d0d;
+    --accent-ink: #ffffff;
     --danger: #ff6b6b;
     --danger-ink: #0d0d0d;
+    --success: #6cc48a;
+    --success-ink: #0d0d0d;
   }
 }
 
@@ -46,9 +50,11 @@
   --border: rgba(255, 255, 255, 0.1);
   --brand-black: #000000;
   --accent: #ffbdd6;
-  --accent-ink: #0d0d0d;
+  --accent-ink: #ffffff;
   --danger: #ff6b6b;
   --danger-ink: #0d0d0d;
+  --success: #6cc48a;
+  --success-ink: #0d0d0d;
 }
 
 * {
@@ -96,6 +102,41 @@ body {
 .app-header nav a.active {
   background: var(--accent);
   color: var(--accent-ink);
+}
+
+.theme-switch {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.theme-switch-button {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+}
+
+.theme-switch-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.theme-switch-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-switch-button.active {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
 }
 
 .nav-user {
@@ -251,6 +292,19 @@ body {
   cursor: pointer;
 }
 
+.theme-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--secondary-ink);
+}
+
+.theme-cell svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 .app-main {
   max-width: 960px;
   margin: 0 auto;
@@ -296,8 +350,39 @@ body {
 }
 
 .category-icon {
-  font-size: 16px;
+  font-size: 24px;
   line-height: 1;
+}
+
+.category-toggle {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 4px 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.category-count {
+  color: var(--muted-ink);
+  font-weight: 600;
+}
+
+.category-chevron {
+  margin-left: auto;
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--muted-ink);
+  transition: transform 0.15s ease;
+}
+
+.category-chevron svg {
+  width: 14px;
+  height: 14px;
+}
+
+.category-chevron.open {
+  transform: rotate(180deg);
 }
 
 .consumable-grid {
@@ -334,7 +419,7 @@ body {
 
 .stock-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 10px;
 }
 
@@ -343,7 +428,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 14px 18px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--chart-surface);
@@ -382,15 +467,29 @@ body {
   cursor: pointer;
 }
 
-.stock-step-button:hover:not(:disabled) {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-color: var(--accent);
-}
-
 .stock-step-button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+.stock-step-button-add {
+  color: var(--success);
+}
+
+.stock-step-button-add:hover:not(:disabled) {
+  background: var(--success);
+  color: var(--success-ink);
+  border-color: var(--success);
+}
+
+.stock-step-button-subtract {
+  color: var(--danger);
+}
+
+.stock-step-button-subtract:hover:not(:disabled) {
+  background: var(--danger);
+  color: var(--danger-ink);
+  border-color: var(--danger);
 }
 
 .feedback {

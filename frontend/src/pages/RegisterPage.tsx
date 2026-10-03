@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Consumable,
@@ -25,7 +25,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(true);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
   const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const toastTimer = useRef<number | undefined>(undefined);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const loadData = async () => {
@@ -40,19 +41,26 @@ export default function RegisterPage() {
 
   useEffect(() => {
     loadData();
+    return () => window.clearTimeout(toastTimer.current);
   }, []);
+
+  const showToast = (type: 'success' | 'error', text: string) => {
+    window.clearTimeout(toastTimer.current);
+    setToast({ type, text });
+    toastTimer.current = window.setTimeout(() => setToast(null), 3000);
+  };
 
   const handleRegister = async (consumable: Consumable) => {
     setRegisteringId(consumable.id);
-    setFeedback(null);
     try {
       await registerConsumption(consumable.id);
-      setFeedback(`${consumable.name} registrado.`);
+      showToast('success', `${consumable.name} registrado`);
       const logsData = await fetchConsumptionLogs({ limit: RECENT_LOGS_LIMIT });
       setRecentLogs(logsData);
+    } catch {
+      showToast('error', `No se pudo registrar ${consumable.name}. Inténtalo de nuevo.`);
     } finally {
       setRegisteringId(null);
-      setTimeout(() => setFeedback(null), 3000);
     }
   };
 
@@ -130,8 +138,13 @@ export default function RegisterPage() {
             </div>
           );
         })}
-        {feedback && <div className="feedback">{feedback}</div>}
       </section>
+
+      {toast && (
+        <div className={`toast toast-${toast.type}`} role="status" aria-live="polite">
+          {toast.text}
+        </div>
+      )}
 
       <section>
         <div className="section-heading">

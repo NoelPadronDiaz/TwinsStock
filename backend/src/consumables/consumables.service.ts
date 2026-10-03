@@ -21,6 +21,8 @@ const DEFAULT_CATALOG: { category: string; products: string[] }[] = [
       'Leche Sin Lactosa',
       'Leche de Avena',
       'Agua',
+      'Yogur',
+      'Miel',
     ],
   },
   {
@@ -37,7 +39,9 @@ const DEFAULT_CATALOG: { category: string; products: string[] }[] = [
       'Pistacho Crunchi',
       'Coco Rallado',
       'Cacahuetes',
-      'Proteina y semillas de chía',
+      'Proteina',
+      'Semillas de chía',
+      'Gofio',
     ],
   },
   {
@@ -64,7 +68,7 @@ export class ConsumablesService implements OnModuleInit {
     @InjectRepository(Consumable)
     private readonly consumablesRepository: Repository<Consumable>,
     private readonly categoriesService: CategoriesService,
-  ) {}
+  ) { }
 
   async onModuleInit() {
     await this.seedDefaults();

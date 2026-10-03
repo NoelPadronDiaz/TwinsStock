@@ -75,6 +75,7 @@ export class ShoppingListService {
           quantity: item.quantity,
         }),
       );
+      await manager.increment(Consumable, { id: consumableId }, 'stock', item.quantity);
       await manager.delete(ShoppingListItem, { consumableId });
       return log;
     });

@@ -22,7 +22,7 @@
 .market-tab.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent-ink);
+  color: var(--brand-black);
 }
 
 .market-tab-count {
@@ -65,7 +65,7 @@
   border-radius: 8px;
   border: 1px solid var(--accent);
   background: var(--accent);
-  color: var(--accent-ink);
+  color: var(--brand-black);
   font-weight: 600;
   cursor: pointer;
 }
@@ -128,4 +128,60 @@
 .shopping-list .empty {
   color: var(--muted-ink);
   padding: 12px 0;
+}
+
+.shopping-item-qty {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.shopping-check {
+  color: var(--success);
+}
+
+.shopping-check:hover:not(:disabled) {
+  background: var(--success);
+  color: var(--success-ink);
+  border-color: var(--success);
+}
+
+.purchase-history {
+  margin-top: 28px;
+}
+
+.purchase-history h3 {
+  font-size: 15px;
+  color: var(--secondary-ink);
+  margin: 0 0 8px;
+}
+
+.purchase-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.purchase-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--chart-surface);
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.purchase-meta {
+  color: var(--secondary-ink);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.purchase-list .empty {
+  color: var(--muted-ink);
+  padding: 8px 0;
 }

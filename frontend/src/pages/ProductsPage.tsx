@@ -202,7 +202,7 @@ export default function ProductsPage() {
           type="number"
           min={0}
           placeholder="Stock mínimo"
-          title="Stock mínimo: al bajar de esta cantidad se añade a la cesta"
+          title="Stock mínimo de referencia (informativo)"
           value={form.minStock}
           onChange={(e) => setForm({ ...form, minStock: e.target.value })}
         />

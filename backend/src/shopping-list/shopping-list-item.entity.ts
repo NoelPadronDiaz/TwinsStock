@@ -24,6 +24,9 @@ export class ShoppingListItem {
   @Column({ type: 'enum', enum: Market, nullable: true })
   market: Market | null;
 
+  @Column({ type: 'int', default: 1 })
+  quantity: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

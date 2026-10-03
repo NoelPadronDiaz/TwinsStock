@@ -97,8 +97,18 @@ export interface ShoppingListItem {
   id: string;
   consumableId: string;
   market: Market | null;
+  quantity: number;
   createdAt: string;
   consumable: Consumable;
+}
+
+export interface PurchaseLog {
+  id: string;
+  consumableId: string | null;
+  consumableName: string;
+  market: Market | null;
+  quantity: number;
+  purchasedAt: string;
 }
 
 export interface ConsumptionLog {
@@ -172,6 +182,12 @@ export const deleteConsumable = (id: string) =>
 
 export const fetchShoppingList = () =>
   api.get<ShoppingListItem[]>('/shopping-list').then((res) => res.data);
+
+export const markAsPurchased = (consumableId: string) =>
+  api.post<PurchaseLog>(`/shopping-list/${consumableId}/purchase`).then((res) => res.data);
+
+export const fetchPurchaseLogs = (limit = 30) =>
+  api.get<PurchaseLog[]>('/shopping-list/purchases', { params: { limit } }).then((res) => res.data);
 
 export const addToShoppingList = (consumableId: string, market: Market | null) =>
   api.post<ShoppingListItem>('/shopping-list', { consumableId, market }).then((res) => res.data);

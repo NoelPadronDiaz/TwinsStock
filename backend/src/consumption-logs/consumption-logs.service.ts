@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { ConsumablesService } from '../consumables/consumables.service';
+import { ShoppingListService } from '../shopping-list/shopping-list.service';
 import { ConsumptionLog } from './consumption-log.entity';
 import { CreateConsumptionLogDto } from './dto/create-consumption-log.dto';
 
@@ -18,6 +19,7 @@ export class ConsumptionLogsService {
     @InjectRepository(ConsumptionLog)
     private readonly logsRepository: Repository<ConsumptionLog>,
     private readonly consumablesService: ConsumablesService,
+    private readonly shoppingListService: ShoppingListService,
   ) {}
 
   async create(dto: CreateConsumptionLogDto) {
@@ -27,6 +29,8 @@ export class ConsumptionLogsService {
     });
     const saved = await this.logsRepository.save(log);
     await this.consumablesService.adjustStock(dto.consumableId, -1);
+    const consumable = await this.consumablesService.findOne(dto.consumableId);
+    await this.shoppingListService.addUnit(consumable);
     return saved;
   }
 
@@ -53,5 +57,6 @@ export class ConsumptionLogsService {
     const log = await this.logsRepository.findOneOrFail({ where: { id } });
     await this.logsRepository.delete({ id });
     await this.consumablesService.adjustStock(log.consumableId, 1);
+    await this.shoppingListService.removeUnit(log.consumableId);
   }
 }

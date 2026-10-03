@@ -3,20 +3,28 @@ import {
   addToShoppingList,
   Consumable,
   fetchConsumables,
+  fetchPurchaseLogs,
   fetchShoppingList,
+  markAsPurchased,
   Market,
   MARKETS,
+  PurchaseLog,
   removeFromShoppingList,
   setShoppingItemMarket,
   ShoppingListItem,
 } from '../api/client';
-import { TrashIcon } from '../components/icons';
+import { CheckIcon, TrashIcon } from '../components/icons';
 import { exportShoppingListPdf } from '../utils/shoppingListPdf';
 import './ShoppingListPage.css';
 
 type Tab = Market | 'none';
 
 const NONE_LABEL = 'Sin supermercado';
+
+const purchaseDateFormatter = new Intl.DateTimeFormat('es-ES', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
 
 function tabLabel(tab: Tab) {
   return tab === 'none' ? NONE_LABEL : tab;
@@ -25,6 +33,7 @@ function tabLabel(tab: Tab) {
 export default function ShoppingListPage() {
   const [items, setItems] = useState<ShoppingListItem[]>([]);
   const [consumables, setConsumables] = useState<Consumable[]>([]);
+  const [purchases, setPurchases] = useState<PurchaseLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('Mercadona');
   const [selectedConsumableId, setSelectedConsumableId] = useState('');
@@ -32,9 +41,14 @@ export default function ShoppingListPage() {
   const [error, setError] = useState<string | null>(null);
 
   const reload = async () => {
-    const [listData, consumablesData] = await Promise.all([fetchShoppingList(), fetchConsumables()]);
+    const [listData, consumablesData, purchasesData] = await Promise.all([
+      fetchShoppingList(),
+      fetchConsumables(),
+      fetchPurchaseLogs(),
+    ]);
     setItems(listData);
     setConsumables(consumablesData);
+    setPurchases(purchasesData);
   };
 
   useEffect(() => {
@@ -60,20 +74,17 @@ export default function ShoppingListPage() {
     [items, activeTab],
   );
 
-  const addableConsumables = useMemo(() => {
-    const inCart = new Set(items.map((item) => item.consumableId));
-    return consumables.filter((c) => c.active && !inCart.has(c.id));
-  }, [consumables, items]);
-
   const addableByCategory = useMemo(() => {
+    const inCart = new Set(items.map((item) => item.consumableId));
     const groups = new Map<string, Consumable[]>();
-    for (const c of addableConsumables) {
+    for (const c of consumables) {
+      if (!c.active || inCart.has(c.id)) continue;
       const key = c.category?.name ?? 'Otros';
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(c);
     }
     return [...groups.entries()];
-  }, [addableConsumables]);
+  }, [consumables, items]);
 
   const run = async (consumableId: string, action: () => Promise<unknown>) => {
     setPendingId(consumableId);
@@ -104,6 +115,10 @@ export default function ShoppingListPage() {
     run(item.consumableId, () => removeFromShoppingList(item.consumableId));
   };
 
+  const handleMarkPurchased = (item: ShoppingListItem) => {
+    run(item.consumableId, () => markAsPurchased(item.consumableId));
+  };
+
   const handleExport = () => {
     exportShoppingListPdf(tabLabel(activeTab), tabItems);
   };
@@ -116,8 +131,8 @@ export default function ShoppingListPage() {
     <div className="shopping-page">
       <h2>Cesta de la compra</h2>
       <p className="hint">
-        Se añaden aquí automáticamente los productos que bajan de su stock mínimo al consumirlos
-        o restarlos. Puedes añadir, quitar o mover productos entre supermercados.
+        Cada consumo añade una unidad a la lista de su supermercado. Al comprar un producto,
+        pulsa el check: pasará al histórico de compras con la fecha.
       </p>
 
       <div className="market-tabs" role="tablist" aria-label="Supermercados">
@@ -173,7 +188,10 @@ export default function ShoppingListPage() {
         {tabItems.map((item) => (
           <li key={item.id} className="shopping-item">
             <div className="shopping-item-info">
-              <span className="shopping-item-name">{item.consumable.name}</span>
+              <span className="shopping-item-name">
+                {item.consumable.name}
+                {item.quantity > 1 && <span className="shopping-item-qty"> ×{item.quantity}</span>}
+              </span>
               <span className="shopping-item-meta">
                 {item.consumable.category?.name ?? 'Sin categoría'} · stock {item.consumable.stock}
                 {item.consumable.minStock > 0 && ` · mínimo ${item.consumable.minStock}`}
@@ -194,6 +212,15 @@ export default function ShoppingListPage() {
                 ))}
               </select>
               <button
+                className="icon-button shopping-check"
+                onClick={() => handleMarkPurchased(item)}
+                disabled={pendingId === item.consumableId}
+                aria-label={`Marcar ${item.consumable.name} como comprado`}
+                title="Comprado"
+              >
+                <CheckIcon />
+              </button>
+              <button
                 className="icon-button icon-button-danger"
                 onClick={() => handleRemove(item)}
                 disabled={pendingId === item.consumableId}
@@ -207,6 +234,24 @@ export default function ShoppingListPage() {
         ))}
         {tabItems.length === 0 && <li className="empty">No hay productos en esta lista.</li>}
       </ul>
+
+      <section className="purchase-history">
+        <h3>Compras realizadas</h3>
+        <ul className="purchase-list">
+          {purchases.map((purchase) => (
+            <li key={purchase.id} className="purchase-item">
+              <span className="purchase-name">
+                {purchase.consumableName}
+                {purchase.quantity > 1 && <span className="shopping-item-qty"> ×{purchase.quantity}</span>}
+              </span>
+              <span className="purchase-meta">
+                {purchase.market ?? NONE_LABEL} · {purchaseDateFormatter.format(new Date(purchase.purchasedAt))}
+              </span>
+            </li>
+          ))}
+          {purchases.length === 0 && <li className="empty">Aún no hay compras registradas.</li>}
+        </ul>
+      </section>
     </div>
   );
 }

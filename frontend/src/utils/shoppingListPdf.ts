@@ -37,7 +37,8 @@ export function exportShoppingListPdf(title: string, items: ShoppingListItem[]) 
       y = 25;
     }
     doc.rect(MARGIN, y - 4, 4, 4);
-    doc.text(item.consumable.name, MARGIN + 8, y);
+    const label = item.quantity > 1 ? `${item.consumable.name} ×${item.quantity}` : item.consumable.name;
+    doc.text(label, MARGIN + 8, y);
     y += LINE_HEIGHT;
   }
 

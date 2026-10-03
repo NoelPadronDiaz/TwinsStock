@@ -2,7 +2,6 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
-import { ShoppingListService } from '../shopping-list/shopping-list.service';
 import { Consumable } from './consumable.entity';
 import { Market } from './market.enum';
 
@@ -70,7 +69,6 @@ export class ConsumablesService implements OnModuleInit {
     @InjectRepository(Consumable)
     private readonly consumablesRepository: Repository<Consumable>,
     private readonly categoriesService: CategoriesService,
-    private readonly shoppingListService: ShoppingListService,
   ) { }
 
   async onModuleInit() {
@@ -170,9 +168,7 @@ export class ConsumablesService implements OnModuleInit {
     },
   ) {
     await this.consumablesRepository.update({ id }, dto);
-    const consumable = await this.findOne(id);
-    await this.shoppingListService.syncAfterStockChange(consumable);
-    return consumable;
+    return this.findOne(id);
   }
 
   async remove(id: string) {
@@ -187,8 +183,6 @@ export class ConsumablesService implements OnModuleInit {
       .where('id = :id', { id })
       .setParameter('delta', delta)
       .execute();
-    const consumable = await this.findOne(id);
-    await this.shoppingListService.syncAfterStockChange(consumable);
-    return consumable;
+    return this.findOne(id);
   }
 }

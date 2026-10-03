@@ -2,7 +2,9 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
+import { ShoppingListService } from '../shopping-list/shopping-list.service';
 import { Consumable } from './consumable.entity';
+import { Market } from './market.enum';
 
 const DEFAULT_CATALOG: { category: string; products: string[] }[] = [
   {
@@ -68,6 +70,7 @@ export class ConsumablesService implements OnModuleInit {
     @InjectRepository(Consumable)
     private readonly consumablesRepository: Repository<Consumable>,
     private readonly categoriesService: CategoriesService,
+    private readonly shoppingListService: ShoppingListService,
   ) { }
 
   async onModuleInit() {
@@ -152,15 +155,24 @@ export class ConsumablesService implements OnModuleInit {
     });
   }
 
-  create(name: string, categoryId: string) {
-    return this.consumablesRepository.save(
-      this.consumablesRepository.create({ name, categoryId }),
-    );
+  create(dto: { name: string; categoryId: string; minStock?: number; market?: Market | null }) {
+    return this.consumablesRepository.save(this.consumablesRepository.create(dto));
   }
 
-  async update(id: string, dto: { name?: string; categoryId?: string; active?: boolean }) {
+  async update(
+    id: string,
+    dto: {
+      name?: string;
+      categoryId?: string;
+      active?: boolean;
+      minStock?: number;
+      market?: Market | null;
+    },
+  ) {
     await this.consumablesRepository.update({ id }, dto);
-    return this.findOne(id);
+    const consumable = await this.findOne(id);
+    await this.shoppingListService.syncAfterStockChange(consumable);
+    return consumable;
   }
 
   async remove(id: string) {
@@ -175,6 +187,8 @@ export class ConsumablesService implements OnModuleInit {
       .where('id = :id', { id })
       .setParameter('delta', delta)
       .execute();
-    return this.findOne(id);
+    const consumable = await this.findOne(id);
+    await this.shoppingListService.syncAfterStockChange(consumable);
+    return consumable;
   }
 }

@@ -6,6 +6,8 @@ import {
   deleteConsumable,
   fetchCategories,
   fetchConsumables,
+  Market,
+  MARKETS,
   StockStatus,
   updateConsumable,
 } from '../api/client';
@@ -26,7 +28,9 @@ const ACTIVE_FILTERS: { value: ActiveFilter; label: string }[] = [
   { value: 'inactive', label: 'Inactivos' },
 ];
 
-const emptyForm = { name: '', categoryId: '' };
+const emptyForm = { name: '', categoryId: '', minStock: '0', market: '' };
+
+const toMarket = (value: string): Market | null => (value ? (value as Market) : null);
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Consumable[]>([]);
@@ -83,7 +87,12 @@ export default function ProductsPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await createConsumable(form);
+      await createConsumable({
+        name: form.name,
+        categoryId: form.categoryId,
+        minStock: Number(form.minStock) || 0,
+        market: toMarket(form.market),
+      });
       setForm(emptyForm);
       await loadProducts();
     } catch (err: any) {
@@ -95,7 +104,12 @@ export default function ProductsPage() {
 
   const openModal = (product: Consumable) => {
     setModalProduct(product);
-    setEditForm({ name: product.name, categoryId: product.categoryId ?? '' });
+    setEditForm({
+      name: product.name,
+      categoryId: product.categoryId ?? '',
+      minStock: String(product.minStock),
+      market: product.market ?? '',
+    });
     setModalError(null);
   };
 
@@ -110,7 +124,12 @@ export default function ProductsPage() {
     setModalError(null);
     setActionPending(true);
     try {
-      await updateConsumable(modalProduct.id, { name: editForm.name, categoryId: editForm.categoryId });
+      await updateConsumable(modalProduct.id, {
+        name: editForm.name,
+        categoryId: editForm.categoryId,
+        minStock: Number(editForm.minStock) || 0,
+        market: toMarket(editForm.market),
+      });
       await loadProducts();
       closeModal();
     } catch (err: any) {
@@ -179,6 +198,22 @@ export default function ProductsPage() {
             </option>
           ))}
         </select>
+        <input
+          type="number"
+          min={0}
+          placeholder="Stock mínimo"
+          title="Stock mínimo: al bajar de esta cantidad se añade a la cesta"
+          value={form.minStock}
+          onChange={(e) => setForm({ ...form, minStock: e.target.value })}
+        />
+        <select value={form.market} onChange={(e) => setForm({ ...form, market: e.target.value })}>
+          <option value="">Sin supermercado</option>
+          {MARKETS.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
         <button type="submit" disabled={submitting}>
           {submitting ? 'Creando...' : 'Crear producto'}
         </button>
@@ -229,6 +264,8 @@ export default function ProductsPage() {
               <th>Nombre</th>
               <th>Categoría</th>
               <th>Stock</th>
+              <th>Mínimo</th>
+              <th>Supermercado</th>
             </tr>
           </thead>
           <tbody>
@@ -242,11 +279,13 @@ export default function ProductsPage() {
                 <td>{product.name}</td>
                 <td>{product.category?.name ?? 'Sin categoría'}</td>
                 <td>{product.stock}</td>
+                <td>{product.minStock}</td>
+                <td>{product.market ?? '—'}</td>
               </tr>
             ))}
             {products.length === 0 && (
               <tr>
-                <td colSpan={4} className="empty">
+                <td colSpan={6} className="empty">
                   Sin productos para estos filtros.
                 </td>
               </tr>
@@ -283,6 +322,29 @@ export default function ProductsPage() {
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="modal-field">
+                Stock mínimo
+                <input
+                  type="number"
+                  min={0}
+                  value={editForm.minStock}
+                  onChange={(e) => setEditForm({ ...editForm, minStock: e.target.value })}
+                />
+              </label>
+              <label className="modal-field">
+                Supermercado
+                <select
+                  value={editForm.market}
+                  onChange={(e) => setEditForm({ ...editForm, market: e.target.value })}
+                >
+                  <option value="">Sin supermercado</option>
+                  {MARKETS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
                     </option>
                   ))}
                 </select>

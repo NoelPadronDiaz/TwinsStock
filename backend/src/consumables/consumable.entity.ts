@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Category } from '../categories/category.entity';
 import { ConsumptionLog } from '../consumption-logs/consumption-log.entity';
+import { Market } from './market.enum';
 
 @Entity('consumables')
 export class Consumable {
@@ -25,6 +26,12 @@ export class Consumable {
 
   @Column({ type: 'int', default: 0 })
   stock: number;
+
+  @Column({ name: 'min_stock', type: 'int', default: 0 })
+  minStock: number;
+
+  @Column({ type: 'enum', enum: Market, nullable: true })
+  market: Market | null;
 
   @ManyToOne(() => Category, (category) => category.consumables, {
     nullable: true,

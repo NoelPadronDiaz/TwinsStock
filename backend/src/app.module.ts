@@ -8,6 +8,7 @@ import { RolesGuard } from './auth/roles.guard';
 import { CategoriesModule } from './categories/categories.module';
 import { ConsumablesModule } from './consumables/consumables.module';
 import { ConsumptionLogsModule } from './consumption-logs/consumption-logs.module';
+import { ShoppingListModule } from './shopping-list/shopping-list.module';
 import { StatsModule } from './stats/stats.module';
 import { UsersModule } from './users/users.module';
 
@@ -42,6 +43,7 @@ import { UsersModule } from './users/users.module';
     CategoriesModule,
     ConsumablesModule,
     ConsumptionLogsModule,
+    ShoppingListModule,
     StatsModule,
   ],
   providers: [

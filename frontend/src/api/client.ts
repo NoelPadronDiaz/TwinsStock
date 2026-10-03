@@ -68,14 +68,37 @@ export interface Category {
   position: number;
 }
 
+export const MARKETS = [
+  'Mercadona',
+  'Makro',
+  'Alcampo',
+  'HiperDino',
+  'Spar',
+  'Alteza',
+  'Lidl',
+  'Aldi',
+] as const;
+
+export type Market = (typeof MARKETS)[number];
+
 export interface Consumable {
   id: string;
   name: string;
   active: boolean;
   position: number;
   stock: number;
+  minStock: number;
+  market: Market | null;
   categoryId: string | null;
   category?: Category | null;
+}
+
+export interface ShoppingListItem {
+  id: string;
+  consumableId: string;
+  market: Market | null;
+  createdAt: string;
+  consumable: Consumable;
 }
 
 export interface ConsumptionLog {
@@ -126,6 +149,8 @@ export const fetchCategories = () => api.get<Category[]>('/categories').then((re
 export interface CreateConsumableInput {
   name: string;
   categoryId: string;
+  minStock?: number;
+  market?: Market | null;
 }
 
 export const createConsumable = (input: CreateConsumableInput) =>
@@ -135,6 +160,8 @@ export interface UpdateConsumableInput {
   name?: string;
   categoryId?: string;
   active?: boolean;
+  minStock?: number;
+  market?: Market | null;
 }
 
 export const updateConsumable = (id: string, input: UpdateConsumableInput) =>
@@ -142,6 +169,20 @@ export const updateConsumable = (id: string, input: UpdateConsumableInput) =>
 
 export const deleteConsumable = (id: string) =>
   api.delete<void>(`/consumables/${id}`).then((res) => res.data);
+
+export const fetchShoppingList = () =>
+  api.get<ShoppingListItem[]>('/shopping-list').then((res) => res.data);
+
+export const addToShoppingList = (consumableId: string, market: Market | null) =>
+  api.post<ShoppingListItem>('/shopping-list', { consumableId, market }).then((res) => res.data);
+
+export const setShoppingItemMarket = (consumableId: string, market: Market | null) =>
+  api
+    .patch<ShoppingListItem>(`/shopping-list/${consumableId}`, { market })
+    .then((res) => res.data);
+
+export const removeFromShoppingList = (consumableId: string) =>
+  api.delete<void>(`/shopping-list/${consumableId}`).then((res) => res.data);
 
 export const registerConsumption = (consumableId: string) =>
   api.post<ConsumptionLog>('/consumption-logs', { consumableId }).then((res) => res.data);

@@ -27,7 +27,7 @@ export class ConsumablesController {
   @Post()
   @Roles('admin')
   create(@Body() dto: CreateConsumableDto) {
-    return this.consumablesService.create(dto.name, dto.categoryId);
+    return this.consumablesService.create(dto);
   }
 
   @Patch(':id')

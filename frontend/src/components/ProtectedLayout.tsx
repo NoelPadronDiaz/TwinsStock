@@ -32,6 +32,9 @@ export default function ProtectedLayout() {
           <NavLink to="/stock" className={({ isActive }) => (isActive ? 'active' : '')}>
             Control de stock
           </NavLink>
+          <NavLink to="/cesta" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Cesta de la compra
+          </NavLink>
           <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'active' : '')}>
             Panel de control
           </NavLink>

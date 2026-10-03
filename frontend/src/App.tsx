@@ -7,6 +7,7 @@ import HistoryPage from './pages/HistoryPage';
 import LoginPage from './pages/LoginPage';
 import ProductsPage from './pages/ProductsPage';
 import RegisterPage from './pages/RegisterPage';
+import ShoppingListPage from './pages/ShoppingListPage';
 import StockPage from './pages/StockPage';
 import UsersPage from './pages/UsersPage';
 
@@ -18,6 +19,7 @@ export default function App() {
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<RegisterPage />} />
           <Route path="/stock" element={<StockPage />} />
+          <Route path="/cesta" element={<ShoppingListPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route

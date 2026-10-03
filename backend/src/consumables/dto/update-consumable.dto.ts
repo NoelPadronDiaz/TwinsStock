@@ -1,4 +1,5 @@
-import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { Market } from '../market.enum';
 
 export class UpdateConsumableDto {
   @IsOptional()
@@ -14,4 +15,14 @@ export class UpdateConsumableDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100000)
+  minStock?: number;
+
+  @IsOptional()
+  @IsEnum(Market)
+  market?: Market | null;
 }

@@ -1,0 +1,131 @@
+.market-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.market-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--secondary-ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.market-tab-count {
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--page-plane);
+  color: var(--primary-ink);
+  font-size: 12px;
+  text-align: center;
+}
+
+.shopping-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.shopping-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shopping-add select {
+  min-width: 240px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+}
+
+.shopping-add button,
+.shopping-export {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shopping-add button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.shopping-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shopping-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+}
+
+.shopping-item-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.shopping-item-name {
+  font-weight: 600;
+}
+
+.shopping-item-meta {
+  font-size: 12px;
+  color: var(--secondary-ink);
+}
+
+.shopping-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.shopping-item-actions select {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+}
+
+.shopping-list .empty {
+  color: var(--muted-ink);
+  padding: 12px 0;
+}

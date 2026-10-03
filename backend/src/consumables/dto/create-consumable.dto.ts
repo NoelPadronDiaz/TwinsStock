@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { Market } from '../market.enum';
 
 export class CreateConsumableDto {
   @IsString()
@@ -8,4 +9,14 @@ export class CreateConsumableDto {
 
   @IsUUID()
   categoryId: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100000)
+  minStock?: number;
+
+  @IsOptional()
+  @IsEnum(Market)
+  market?: Market | null;
 }

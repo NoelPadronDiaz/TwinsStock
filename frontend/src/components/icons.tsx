@@ -87,3 +87,84 @@ export function ListPlusIcon() {
     </svg>
   );
 }
+
+export function BoxIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 8 12 3 3 8l9 5 9-5Z" />
+      <path d="M3 8v8l9 5 9-5V8" />
+      <path d="M12 13v8" />
+    </svg>
+  );
+}
+
+export function GridIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </svg>
+  );
+}
+
+export function CartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="21" r="1" />
+      <circle cx="19" cy="21" r="1" />
+      <path d="M2.5 3h2l2.6 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L21 7H6" />
+    </svg>
+  );
+}
+
+export function ChartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="4" y1="20" x2="4" y2="10" />
+      <line x1="11" y1="20" x2="11" y2="4" />
+      <line x1="18" y1="20" x2="18" y2="14" />
+      <line x1="2" y1="20" x2="22" y2="20" />
+    </svg>
+  );
+}
+
+export function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12 7 12 12 15.5 14" />
+    </svg>
+  );
+}
+
+export function TagIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.57 3.3L4 3a1 1 0 0 0-1 1l.3 5.57a2 2 0 0 0 .54 1.42l9.58 9.58a2 2 0 0 0 2.83 0l4.34-4.34a2 2 0 0 0 0-2.82Z" />
+      <circle cx="7.5" cy="7.5" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function UsersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+export function MoreIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <circle cx="5" cy="12" r="2.2" />
+      <circle cx="12" cy="12" r="2.2" />
+      <circle cx="19" cy="12" r="2.2" />
+    </svg>
+  );
+}

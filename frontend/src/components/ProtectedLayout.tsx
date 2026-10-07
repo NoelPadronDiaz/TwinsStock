@@ -1,87 +1,193 @@
-import { useState } from 'react';
-import { NavLink, Navigate, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { MoonIcon, SunIcon } from './icons';
+import {
+  BoxIcon,
+  CartIcon,
+  ChartIcon,
+  ClockIcon,
+  GridIcon,
+  MoonIcon,
+  MoreIcon,
+  PowerIcon,
+  SunIcon,
+  TagIcon,
+  UsersIcon,
+} from './icons';
+
+interface NavItem {
+  to: string;
+  end?: boolean;
+  label: string;
+  icon: () => JSX.Element;
+  adminOnly?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { to: '/', end: true, label: 'Registrar consumo', icon: BoxIcon },
+  { to: '/stock', label: 'Control de stock', icon: GridIcon },
+  { to: '/cesta', label: 'Cesta de la compra', icon: CartIcon },
+  { to: '/dashboard', label: 'Panel de control', icon: ChartIcon },
+  { to: '/history', label: 'Historial', icon: ClockIcon },
+  { to: '/products', label: 'Productos', icon: TagIcon, adminOnly: true },
+  { to: '/users', label: 'Usuarios', icon: UsersIcon, adminOnly: true },
+];
+
+function ThemeSwitch({ theme, onChange }: { theme: 'light' | 'dark'; onChange: (t: 'light' | 'dark') => void }) {
+  return (
+    <div className="theme-switch" role="group" aria-label="Tema">
+      <button
+        type="button"
+        className={theme === 'light' ? 'theme-switch-button active' : 'theme-switch-button'}
+        onClick={() => onChange('light')}
+        aria-pressed={theme === 'light'}
+        aria-label="Tema claro"
+        title="Tema claro"
+      >
+        <SunIcon />
+      </button>
+      <button
+        type="button"
+        className={theme === 'dark' ? 'theme-switch-button active' : 'theme-switch-button'}
+        onClick={() => onChange('dark')}
+        aria-pressed={theme === 'dark'}
+        aria-label="Tema oscuro"
+        title="Tema oscuro"
+      >
+        <MoonIcon />
+      </button>
+    </div>
+  );
+}
 
 export default function ProtectedLayout() {
   const { user, logout, setTheme } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setSheetOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSheetOpen(false);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [sheetOpen]);
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
+  const items = NAV_ITEMS.filter((item) => !item.adminOnly || user.role === 'admin');
+  const primaryItems = items.slice(0, 3);
+  const overflowItems = items.slice(3);
+
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="app-header-top">
-          <img src="/logo-twins.png" alt="Twins" className="brand-logo" />
-          <button
-            className="nav-toggle"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={menuOpen}
-          >
-            {menuOpen ? '✕' : '☰'}
+    <div className="layout">
+      <aside className="sidebar">
+        <img src="/logo-twins.png" alt="Twins" className="sidebar-logo" />
+
+        <div className="sidebar-user-row">
+          <span className="sidebar-user-name">{user.name}</span>
+          <ThemeSwitch theme={user.theme} onChange={setTheme} />
+        </div>
+
+        <nav className="sidebar-nav">
+          {items.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+            >
+              <item.icon />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <a className="sidebar-legal-link" href="#" onClick={(e) => e.preventDefault()}>
+            Aviso legal
+          </a>
+          <button className="sidebar-logout-button" onClick={logout}>
+            <PowerIcon />
+            Cerrar sesión
           </button>
         </div>
-        <nav className={menuOpen ? 'nav-open' : ''} onClick={() => setMenuOpen(false)}>
-          <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
-            Registrar consumo
+      </aside>
+
+      <div className="layout-main">
+        <header className="mobile-topbar">
+          <img src="/logo-twins.png" alt="Twins" className="brand-logo" />
+        </header>
+
+        <main className="app-main">
+          <Outlet />
+        </main>
+      </div>
+
+      <nav className="bottom-nav">
+        {primaryItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) => (isActive ? 'bottom-nav-item active' : 'bottom-nav-item')}
+          >
+            <item.icon />
+            <span>{item.label}</span>
           </NavLink>
-          <NavLink to="/stock" className={({ isActive }) => (isActive ? 'active' : '')}>
-            Control de stock
-          </NavLink>
-          <NavLink to="/cesta" className={({ isActive }) => (isActive ? 'active' : '')}>
-            Cesta de la compra
-          </NavLink>
-          <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'active' : '')}>
-            Panel de control
-          </NavLink>
-          <NavLink to="/history" className={({ isActive }) => (isActive ? 'active' : '')}>
-            Historial
-          </NavLink>
-          {user.role === 'admin' && (
-            <NavLink to="/products" className={({ isActive }) => (isActive ? 'active' : '')}>
-              Productos
-            </NavLink>
-          )}
-          {user.role === 'admin' && (
-            <NavLink to="/users" className={({ isActive }) => (isActive ? 'active' : '')}>
-              Usuarios
-            </NavLink>
-          )}
-          <div className="theme-switch" role="group" aria-label="Tema">
-            <button
-              type="button"
-              className={user.theme === 'light' ? 'theme-switch-button active' : 'theme-switch-button'}
-              onClick={() => setTheme('light')}
-              aria-pressed={user.theme === 'light'}
-              aria-label="Tema claro"
-              title="Tema claro"
-            >
-              <SunIcon />
-            </button>
-            <button
-              type="button"
-              className={user.theme === 'dark' ? 'theme-switch-button active' : 'theme-switch-button'}
-              onClick={() => setTheme('dark')}
-              aria-pressed={user.theme === 'dark'}
-              aria-label="Tema oscuro"
-              title="Tema oscuro"
-            >
-              <MoonIcon />
-            </button>
+        ))}
+        <button
+          type="button"
+          className="bottom-nav-item"
+          onClick={() => setSheetOpen(true)}
+          aria-haspopup="true"
+          aria-expanded={sheetOpen}
+        >
+          <MoreIcon />
+          <span>Más</span>
+        </button>
+      </nav>
+
+      {sheetOpen && (
+        <div className="sheet-overlay" onClick={() => setSheetOpen(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle" />
+            <span className="sidebar-user-name">{user.name}</span>
+            {overflowItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+              >
+                <item.icon />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+            <ThemeSwitch theme={user.theme} onChange={setTheme} />
+            <div className="sidebar-footer">
+              <a className="sidebar-legal-link" href="#" onClick={(e) => e.preventDefault()}>
+                Aviso legal
+              </a>
+              <button className="sidebar-logout-button" onClick={logout}>
+                <PowerIcon />
+                Cerrar sesión
+              </button>
+            </div>
           </div>
-          <span className="nav-user">{user.name}</span>
-          <button className="nav-logout" onClick={logout}>
-            Salir
-          </button>
-        </nav>
-      </header>
-      <main className="app-main">
-        <Outlet />
-      </main>
+        </div>
+      )}
     </div>
   );
 }

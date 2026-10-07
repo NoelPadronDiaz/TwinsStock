@@ -68,13 +68,29 @@ body {
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
-.app-header {
+.layout {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 24px;
+  min-height: 100vh;
+}
+
+.layout-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar {
+  width: 248px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px;
   background: var(--brand-black);
-  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .brand-logo {
@@ -82,37 +98,39 @@ body {
   display: block;
 }
 
-.app-header nav {
+.sidebar-logo {
+  display: block;
+  margin-bottom: 30px;
+}
+
+.sidebar-user-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  row-gap: 6px;
+  justify-content: space-between;
   gap: 8px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.app-header nav a {
-  padding: 8px 14px;
-  border-radius: 20px;
-  text-decoration: none;
-  color: rgba(255, 255, 255, 0.75);
-  font-weight: 600;
+.sidebar-user-name {
+  color: rgba(255, 255, 255, 0.88);
   font-size: 14px;
-}
-
-.app-header nav a.active {
-  background: var(--accent);
-  color: var(--accent-ink);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .theme-switch {
   display: flex;
   gap: 4px;
-  margin-left: 8px;
+  flex-shrink: 0;
 }
 
 .theme-switch-button {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -125,8 +143,8 @@ body {
 }
 
 .theme-switch-button svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 
 .theme-switch-button:hover {
@@ -135,31 +153,90 @@ body {
 
 .theme-switch-button.active {
   background: var(--accent);
-  color: var(--accent-ink);
+  color: var(--brand-black);
   border-color: var(--accent);
 }
 
-.nav-user {
-  margin-left: 8px;
-  padding: 8px 0;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 13px;
-  font-weight: 600;
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
 }
 
-.nav-logout {
-  padding: 8px 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
   color: rgba(255, 255, 255, 0.75);
   font-weight: 600;
+  font-size: 14px;
+}
+
+.nav-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.nav-item.active {
+  background: var(--accent);
+  color: var(--brand-black);
+}
+
+.sidebar-footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-legal-link {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.sidebar-logout-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--brand-black);
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
 }
 
-.nav-logout:hover {
-  background: rgba(255, 255, 255, 0.1);
+.sidebar-logout-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sidebar-logout-button:hover {
+  filter: brightness(0.96);
+}
+
+.mobile-topbar {
+  display: none;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--brand-black);
 }
 
 .login-page {
@@ -542,6 +619,7 @@ body {
     opacity: 0;
     transform: translate(-50%, 8px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -748,60 +826,101 @@ body {
   border-color: var(--accent);
 }
 
-.nav-toggle {
+.bottom-nav {
   display: none;
-  width: 36px;
-  height: 36px;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: var(--brand-black);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 18px;
-  line-height: 1;
+  gap: 3px;
+  padding: 6px 2px;
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
 }
 
-@media (max-width: 720px) {
-  .app-header {
-    flex-wrap: wrap;
-    padding: 10px 16px;
-  }
+.bottom-nav-item svg {
+  width: 20px;
+  height: 20px;
+}
 
-  .app-header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-  }
+.bottom-nav-item.active {
+  color: var(--accent);
+}
 
-  .nav-toggle {
-    display: inline-flex;
-  }
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.5);
+}
 
-  .app-header nav {
+.sheet {
+  width: 100%;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: var(--brand-black);
+  border-radius: 18px 18px 0 0;
+  padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 4px auto 12px;
+}
+
+.sheet .sidebar-user-name {
+  margin-bottom: 8px;
+}
+
+.sheet .sidebar-footer {
+  margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
     display: none;
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-    padding-top: 12px;
   }
 
-  .app-header nav.nav-open {
+  .mobile-topbar {
     display: flex;
   }
 
-  .app-header nav a,
-  .nav-logout {
-    width: 100%;
-    text-align: left;
+  .bottom-nav {
+    display: flex;
   }
 
-  .nav-user {
-    margin-left: 0;
-    padding: 8px 14px;
+  .app-main {
+    padding-bottom: 88px;
+  }
+}
+
+@media (min-width: 901px) {
+  .sheet-overlay {
+    display: none;
   }
 }
 

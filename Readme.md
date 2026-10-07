@@ -148,10 +148,146 @@ Si al desplegar da `404: NOT_FOUND` en todas las rutas, casi seguro es el
 Root Directory sin configurar (Settings → General → Root Directory, en cada
 proyecto) — es la causa más común.
 
+## Docker
+
+Alternativa a Neon + `npm run dev` para desarrollar y para desplegar en un
+servidor propio. **No sustituye a Vercel**: son dos formas de desplegar
+independientes entre sí, y Vercel sigue funcionando exactamente igual que
+antes (mismos `vercel.json`, mismo `backend/api/index.ts`).
+
+### Desarrollo (`docker-compose.yml`)
+
+Levanta Postgres + backend + frontend con recarga en caliente, sin tocar
+Neon — cada uno con su propia base de datos local en un volumen de Docker.
+Solo se monta en caliente `backend/src` y `frontend/src` (no todo el
+proyecto): así `backend/.env`/`frontend/.env` — con las credenciales reales
+de Neon que usas fuera de Docker — nunca llegan al contenedor. Si tocas
+`vite.config.ts`, `tsconfig.json` o `package.json`, hace falta reconstruir
+la imagen (`docker compose up --build`).
+
+Requisitos: Docker Desktop.
+
+```bash
+cp .env.docker.example .env.docker
+# edita JWT_SECRET y ADMIN_PASSWORD en .env.docker
+
+docker compose --env-file .env.docker up --build
+```
+
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:3000/api`
+- Postgres: `localhost:5434` (usuario/contraseña/base `twinsstock`) — no en el
+  5432 estándar, por si ya tienes otro Postgres (local u otro proyecto en
+  Docker) usándolo.
+
+El login funciona con el admin que crea el seed (`ADMIN_USERNAME`/
+`ADMIN_PASSWORD` de `.env.docker`). Editar un fichero en `backend/src` o en
+`frontend/src` recarga el servicio correspondiente solo.
+
+### Producción (`docker-compose.prod.yml`)
+
+Imágenes optimizadas (backend: solo `dist/` + deps de producción, usuario no
+root; frontend: estáticos servidos por nginx), pensadas para un servidor con
+Docker.
+
+```bash
+cp .env.prod.example .env.prod
+# rellena DATABASE_URL (Neon u otra Postgres), CORS_ORIGIN, JWT_SECRET,
+# ADMIN_PASSWORD y APP_PORT en .env.prod
+
+docker compose -f docker-compose.prod.yml --env-file .env.prod up --build
+```
+
+La app queda en `http://localhost:${APP_PORT:-8080}`. nginx sirve el
+frontend, hace fallback a `index.html` para las rutas de React Router, y
+reenvía `/api/` al backend (que no publica puerto propio: solo es accesible
+desde dentro de la red de Compose).
+
+Si falta alguna variable obligatoria (`DATABASE_URL`, `JWT_SECRET`,
+`CORS_ORIGIN`, `ADMIN_PASSWORD`), Compose se niega a arrancar con un mensaje
+indicando cuál falta, en vez de arrancar a medias.
+
+**Probar producción en local sin tocar Neon**: el servicio `db` está detrás
+de un profile opcional (`local-db`):
+
+```bash
+docker compose -f docker-compose.prod.yml --profile local-db --env-file .env.prod up --build
+```
+
+Pon en `.env.prod`:
+
+```
+DATABASE_URL=postgresql://twinsstock:twinsstock@db:5432/twinsstock
+DB_SSL=false
+```
+
+(Postgres local no habla SSL; `DB_SSL` solo hace falta ponerlo a `false` en
+este caso — contra Neon se deja sin definir y usa `true` por defecto.)
+
+### Abrir la app desde el móvil (misma red)
+
+Pensado para probar flujos que necesitan un segundo dispositivo (p. ej. el
+fichaje por QR). En **desarrollo**, el frontend llama a `/api` en vez de a
+`http://localhost:3000`, y es el propio servidor de Vite quien reenvía esa
+ruta al contenedor del backend — así el móvil nunca necesita conocer la IP
+del backend ni se toca CORS.
+
+1. Averigua la IP de tu PC en la red local (`ipconfig` → "Dirección IPv4").
+2. Con `docker compose up` ya corriendo, abre `http://<esa-ip>:5173` desde el
+   móvil.
+
+### Comandos habituales
+
+| Acción | Comando |
+|---|---|
+| Levantar (dev) | `docker compose --env-file .env.docker up` |
+| Levantar en segundo plano | añade `-d` al anterior |
+| Parar | `docker compose down` |
+| Parar y borrar también los volúmenes (incluida la BD) | `docker compose down -v` |
+| Ver logs de un servicio | `docker compose logs -f backend` |
+| Reconstruir tras cambiar dependencias (`package.json`) | `docker compose up --build backend` |
+| Abrir una shell en un contenedor | `docker compose exec backend sh` |
+| Conectarse a Postgres (dev) | `docker compose exec db psql -U twinsstock -d twinsstock` (o un cliente externo a `localhost:5434`) |
+| Borrar la base de datos de desarrollo (empezar de cero) | `docker compose down -v` (vuelve a sembrar el admin en el próximo `up`) |
+
+Todo lo anterior aplica igual al compose de producción añadiendo
+`-f docker-compose.prod.yml --env-file .env.prod`.
+
+### Variables de entorno
+
+**Desarrollo** (`.env.docker`):
+
+| Variable | Obligatoria | Notas |
+|---|---|---|
+| `JWT_SECRET` | Sí | Cualquier cadena en local |
+| `ADMIN_USERNAME` | No (`admin` por defecto) | |
+| `ADMIN_PASSWORD` | Sí | Solo se usa si la tabla de usuarios está vacía |
+
+Las credenciales de Postgres y las URLs internas están fijas en
+`docker-compose.yml` (`twinsstock`/`twinsstock`/`twinsstock`, `DB_HOST=db`) —
+no son secretos reales, no hace falta configurarlas.
+
+**Producción** (`.env.prod`):
+
+| Variable | Obligatoria | Notas |
+|---|---|---|
+| `DATABASE_URL` | Sí | Neon u otra Postgres; con `local-db` apunta a `db` |
+| `CORS_ORIGIN` | Sí | Origen real desde el que se sirve el frontend |
+| `JWT_SECRET` | Sí | Cadena aleatoria larga, distinta a la de desarrollo |
+| `ADMIN_PASSWORD` | Sí | Solo se usa si la tabla de usuarios está vacía |
+| `ADMIN_USERNAME` | No (`admin`) | |
+| `ADMIN_NAME` | No (`Administrador`) | |
+| `JWT_EXPIRES_IN` | No (`12h`) | |
+| `APP_PORT` | No (`8080`) | Puerto del host para el frontend |
+| `DB_SSL` | No (`true`) | Pon `false` solo con el profile `local-db` |
+
 ## Notas
 
 - El esquema de la base de datos se sincroniza automáticamente
   (`synchronize: true`) para simplificar el desarrollo inicial. Antes de pasar
-  a producción, conviene sustituirlo por migraciones de TypeORM.
+  a producción, conviene sustituirlo por migraciones de TypeORM. Mientras
+  tanto, el entorno de desarrollo con Docker (base de datos propia, no Neon)
+  es el sitio para probar cambios de esquema antes de que lleguen a
+  producción.
 - Añadir nuevos consumibles se puede hacer vía `POST /api/consumables` (se
   puede exponer más adelante en la UI si hace falta gestionarlos ahí).

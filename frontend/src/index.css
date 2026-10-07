@@ -922,6 +922,11 @@ body {
   .sheet-overlay {
     display: none;
   }
+
+  .app-main {
+    margin: 0 auto 0 0;
+    margin-left: clamp(24px, 6vw, 96px);
+  }
 }
 
 @media (max-width: 640px) {

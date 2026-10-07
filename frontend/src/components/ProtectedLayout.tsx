@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { UserRole } from '../api/client';
 import {
   BoxIcon,
+  CalendarCheckIcon,
+  CalendarIcon,
   CartIcon,
   ChartIcon,
   ClockIcon,
@@ -15,22 +18,26 @@ import {
   UsersIcon,
 } from './icons';
 
+const ALL_ROLES: UserRole[] = ['admin', 'employee'];
+
 interface NavItem {
   to: string;
   end?: boolean;
   label: string;
   icon: () => JSX.Element;
-  adminOnly?: boolean;
+  roles: UserRole[];
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/', end: true, label: 'Registrar consumo', icon: BoxIcon },
-  { to: '/stock', label: 'Control de stock', icon: GridIcon },
-  { to: '/cesta', label: 'Cesta de la compra', icon: CartIcon },
-  { to: '/dashboard', label: 'Panel de control', icon: ChartIcon },
-  { to: '/history', label: 'Historial', icon: ClockIcon },
-  { to: '/products', label: 'Productos', icon: TagIcon, adminOnly: true },
-  { to: '/users', label: 'Usuarios', icon: UsersIcon, adminOnly: true },
+  { to: '/', end: true, label: 'Registrar consumo', icon: BoxIcon, roles: ALL_ROLES },
+  { to: '/stock', label: 'Control de stock', icon: GridIcon, roles: ALL_ROLES },
+  { to: '/cesta', label: 'Cesta de la compra', icon: CartIcon, roles: ALL_ROLES },
+  { to: '/dashboard', label: 'Panel de control', icon: ChartIcon, roles: ['admin', 'employee'] },
+  { to: '/history', label: 'Historial', icon: ClockIcon, roles: ALL_ROLES },
+  { to: '/my-schedule', label: 'Mi horario', icon: CalendarCheckIcon, roles: ['admin', 'employee'] },
+  { to: '/products', label: 'Productos', icon: TagIcon, roles: ['admin'] },
+  { to: '/schedules', label: 'Horarios', icon: CalendarIcon, roles: ['admin'] },
+  { to: '/users', label: 'Usuarios', icon: UsersIcon, roles: ['admin'] },
 ];
 
 function ThemeSwitch({ theme, onChange }: { theme: 'light' | 'dark'; onChange: (t: 'light' | 'dark') => void }) {
@@ -86,7 +93,7 @@ export default function ProtectedLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  const items = NAV_ITEMS.filter((item) => !item.adminOnly || user.role === 'admin');
+  const items = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
   const primaryItems = items.slice(0, 3);
   const overflowItems = items.slice(3);
 

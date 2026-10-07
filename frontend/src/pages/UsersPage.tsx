@@ -55,6 +55,19 @@ export default function UsersPage() {
     }
   };
 
+  const changeWeeklyHours = async (user: User, value: string) => {
+    if (value === '') return;
+    const weeklyHours = Number(value);
+    if (Number.isNaN(weeklyHours)) return;
+    setPendingId(user.id);
+    try {
+      await updateUser(user.id, { weeklyHours });
+      await loadUsers();
+    } finally {
+      setPendingId(null);
+    }
+  };
+
   const resetPassword = async (user: User) => {
     const newPassword = window.prompt(`Nueva contraseña para "${user.username}" (mínimo 6 caracteres):`);
     if (!newPassword) return;
@@ -109,6 +122,14 @@ export default function UsersPage() {
           <option value="employee">Empleado</option>
           <option value="admin">Administrador</option>
         </select>
+        <input
+          type="number"
+          placeholder="Horas semanales (opcional)"
+          min={0}
+          max={168}
+          value={form.weeklyHours ?? ''}
+          onChange={(e) => setForm({ ...form, weeklyHours: e.target.value ? Number(e.target.value) : undefined })}
+        />
         <button type="submit" disabled={submitting}>
           {submitting ? 'Creando...' : 'Crear usuario'}
         </button>
@@ -122,6 +143,7 @@ export default function UsersPage() {
               <th>Usuario</th>
               <th>Nombre</th>
               <th>Rol</th>
+              <th>Horas/sem</th>
               <th>Estado</th>
               <th>Tema</th>
               <th>Creado</th>
@@ -142,6 +164,17 @@ export default function UsersPage() {
                     <option value="employee">Empleado</option>
                     <option value="admin">Administrador</option>
                   </select>
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    className="weekly-hours-input"
+                    min={0}
+                    max={168}
+                    defaultValue={user.weeklyHours ?? ''}
+                    disabled={pendingId === user.id}
+                    onBlur={(e) => changeWeeklyHours(user, e.target.value)}
+                  />
                 </td>
                 <td>{user.active ? 'Activo' : 'Inactivo'}</td>
                 <td className="theme-cell">

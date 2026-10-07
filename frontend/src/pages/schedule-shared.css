@@ -1,0 +1,260 @@
+.schedules-page h2,
+.my-schedule-page h2 {
+  margin-bottom: 4px;
+}
+
+.schedule-employee-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.schedule-employee-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  cursor: pointer;
+}
+
+.schedule-employee-name {
+  font-weight: 600;
+  flex: 1;
+}
+
+.schedule-employee-hours {
+  color: var(--secondary-ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-status-pill {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--page-plane);
+  color: var(--muted-ink);
+}
+
+.schedule-status-pill.ok {
+  background: var(--success);
+  color: var(--success-ink);
+}
+
+.schedule-status-pill.under {
+  background: #c98a00;
+  color: #fff;
+}
+
+.schedule-status-pill.over {
+  background: var(--danger);
+  color: var(--danger-ink);
+}
+
+.schedule-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.schedule-header h2 {
+  margin: 0;
+}
+
+.schedule-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.schedule-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.schedule-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.schedule-month-grid-header {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-ink);
+  padding: 4px 0;
+}
+
+.schedule-day-cell {
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.schedule-day-cell.outside {
+  opacity: 0.4;
+}
+
+.schedule-day-number {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--secondary-ink);
+}
+
+.schedule-day-chip {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--brand-black);
+}
+
+.schedule-shift-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.schedule-shift-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--page-plane);
+}
+
+.schedule-shift-note {
+  color: var(--secondary-ink);
+  font-size: 12px;
+}
+
+.schedule-shift-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.schedule-shift-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.schedule-template-day {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gridline);
+}
+
+.schedule-template-day-label {
+  width: 90px;
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 13px;
+  padding-top: 6px;
+}
+
+.schedule-template-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.schedule-template-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-template-add {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--secondary-ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.schedule-week-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.schedule-week-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--chart-surface);
+  border: 1px solid var(--border);
+}
+
+.schedule-week-date {
+  color: var(--muted-ink);
+  font-size: 12px;
+}
+
+.schedule-week-shifts {
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-employee-list .empty,
+.schedule-shift-list .empty {
+  color: var(--muted-ink);
+  justify-content: center;
+  cursor: default;
+}
+
+.weekly-hours-input {
+  width: 64px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+}

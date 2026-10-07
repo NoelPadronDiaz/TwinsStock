@@ -14,6 +14,7 @@ export interface User {
   role: UserRole;
   active: boolean;
   theme: UserTheme;
+  weeklyHours: number | null;
   createdAt: string;
 }
 
@@ -246,6 +247,7 @@ export interface CreateUserInput {
   name: string;
   password: string;
   role: UserRole;
+  weeklyHours?: number;
 }
 
 export const createUser = (input: CreateUserInput) =>
@@ -256,6 +258,7 @@ export interface UpdateUserInput {
   role?: UserRole;
   active?: boolean;
   password?: string;
+  weeklyHours?: number;
 }
 
 export const updateUser = (id: string, input: UpdateUserInput) =>
@@ -263,3 +266,71 @@ export const updateUser = (id: string, input: UpdateUserInput) =>
 
 export const updateOwnTheme = (theme: UserTheme) =>
   api.patch<User>('/users/me/theme', { theme }).then((res) => res.data);
+
+export interface Shift {
+  id: string;
+  userId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  note: string | null;
+  createdAt: string;
+  user?: { id: string; name: string; username: string };
+}
+
+export interface ShiftTemplate {
+  id: string;
+  userId: string;
+  weekday: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface ShiftRangeResult {
+  datesCreated: string[];
+  datesSkipped: string[];
+}
+
+export const fetchShifts = (params: { userId?: string; from: string; to: string }) =>
+  api.get<Shift[]>('/shifts', { params }).then((res) => res.data);
+
+export const fetchMyShifts = (from: string, to: string) =>
+  api.get<Shift[]>('/shifts/me', { params: { from, to } }).then((res) => res.data);
+
+export interface CreateShiftInput {
+  userId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  note?: string;
+}
+
+export const createShift = (input: CreateShiftInput) =>
+  api.post<Shift>('/shifts', input).then((res) => res.data);
+
+export interface UpdateShiftInput {
+  startTime?: string;
+  endTime?: string;
+  note?: string;
+}
+
+export const updateShift = (id: string, input: UpdateShiftInput) =>
+  api.patch<Shift>(`/shifts/${id}`, input).then((res) => res.data);
+
+export const deleteShift = (id: string) => api.delete<void>(`/shifts/${id}`).then((res) => res.data);
+
+export const applyShiftTemplate = (userId: string, from: string, to: string) =>
+  api.post<ShiftRangeResult>('/shifts/apply-template', { userId, from, to }).then((res) => res.data);
+
+export const copyShiftWeek = (userId: string, sourceWeekStart: string, targetWeekStart: string) =>
+  api
+    .post<ShiftRangeResult>('/shifts/copy-week', { userId, sourceWeekStart, targetWeekStart })
+    .then((res) => res.data);
+
+export const fetchShiftTemplates = (userId: string) =>
+  api.get<ShiftTemplate[]>(`/shift-templates/${userId}`).then((res) => res.data);
+
+export const replaceShiftTemplates = (
+  userId: string,
+  templates: { weekday: number; startTime: string; endTime: string }[],
+) => api.put<ShiftTemplate[]>(`/shift-templates/${userId}`, { templates }).then((res) => res.data);

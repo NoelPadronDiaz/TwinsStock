@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 import { UserRole } from '../user.entity';
 
 export class CreateUserDto {
@@ -16,4 +16,10 @@ export class CreateUserDto {
 
   @IsIn(['admin', 'employee'])
   role: UserRole;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(168)
+  weeklyHours?: number;
 }

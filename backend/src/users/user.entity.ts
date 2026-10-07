@@ -26,6 +26,10 @@ export class User {
   @Column({ type: 'varchar', default: 'light' })
   theme: UserTheme;
 
+  // 'float' (not 'numeric') so pg returns a JS number, not a string.
+  @Column({ name: 'weekly_hours', type: 'float', nullable: true })
+  weeklyHours: number | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

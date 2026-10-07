@@ -73,6 +73,7 @@ export class UsersService implements OnModuleInit {
         username: dto.username,
         name: dto.name,
         role: dto.role,
+        weeklyHours: dto.weeklyHours ?? null,
         passwordHash: await bcrypt.hash(dto.password, SALT_ROUNDS),
       }),
     );
@@ -85,6 +86,7 @@ export class UsersService implements OnModuleInit {
     if (dto.role !== undefined) user.role = dto.role;
     if (dto.active !== undefined) user.active = dto.active;
     if (dto.theme !== undefined) user.theme = dto.theme;
+    if (dto.weeklyHours !== undefined) user.weeklyHours = dto.weeklyHours;
     if (dto.password) user.passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
     return this.usersRepository.save(user);

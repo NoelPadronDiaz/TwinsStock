@@ -329,8 +329,10 @@ body {
 
 .category-group {
   margin-top: 20px;
-  padding-left: 12px;
-  border-left: 3px solid var(--accent);
+  padding: 14px 16px 18px;
+  border-radius: 14px;
+  background: rgba(255, 189, 214, 0.16);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
 .category-group:first-child {
@@ -490,6 +492,24 @@ body {
   background: var(--danger);
   color: var(--danger-ink);
   border-color: var(--danger);
+}
+
+.stock-manual-button {
+  width: 30px;
+  height: 30px;
+  margin-left: 4px;
+  border-radius: 50%;
+}
+
+.stock-manual-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.stock-manual-button:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--brand-black);
+  border-color: var(--accent);
 }
 
 .toast {

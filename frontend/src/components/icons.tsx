@@ -75,3 +75,15 @@ export function CheckIcon() {
     </svg>
   );
 }
+
+export function ListPlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="6" x2="14" y2="6" />
+      <line x1="3" y1="12" x2="14" y2="12" />
+      <line x1="3" y1="18" x2="10" y2="18" />
+      <line x1="19" y1="14" x2="19" y2="21" />
+      <line x1="15.5" y1="17.5" x2="22.5" y2="17.5" />
+    </svg>
+  );
+}

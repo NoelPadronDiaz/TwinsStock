@@ -1,9 +1,11 @@
 import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { StatsGroupBy, StatsService } from './stats.service';
 
 const VALID_GROUP_BY: StatsGroupBy[] = ['day', 'week', 'month'];
 
 @Controller('stats')
+@Roles('admin', 'employee')
 export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 

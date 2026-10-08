@@ -25,19 +25,19 @@ export class ConsumablesController {
   }
 
   @Post()
-  @Roles('admin')
+  @Roles('admin', 'kiosk')
   create(@Body() dto: CreateConsumableDto) {
     return this.consumablesService.create(dto);
   }
 
   @Patch(':id')
-  @Roles('admin')
+  @Roles('admin', 'kiosk')
   update(@Param('id') id: string, @Body() dto: UpdateConsumableDto) {
     return this.consumablesService.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles('admin', 'kiosk')
   remove(@Param('id') id: string) {
     return this.consumablesService.remove(id);
   }

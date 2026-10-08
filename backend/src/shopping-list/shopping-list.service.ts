@@ -61,6 +61,10 @@ export class ShoppingListService {
     );
   }
 
+  // Checking an item off only logs the purchase; it no longer touches
+  // stock automatically. Stock gets corrected by hand (StockPage's +/- or
+  // "Reponer") once the products are actually in, since the checkoff date
+  // and the restock date aren't necessarily the same.
   markPurchased(consumableId: string) {
     return this.itemsRepository.manager.transaction(async (manager) => {
       const item = await manager.findOneOrFail(ShoppingListItem, {
@@ -75,7 +79,6 @@ export class ShoppingListService {
           quantity: item.quantity,
         }),
       );
-      await manager.increment(Consumable, { id: consumableId }, 'stock', item.quantity);
       await manager.delete(ShoppingListItem, { consumableId });
       return log;
     });

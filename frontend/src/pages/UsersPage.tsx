@@ -121,6 +121,7 @@ export default function UsersPage() {
         >
           <option value="employee">Empleado</option>
           <option value="admin">Administrador</option>
+          <option value="kiosk">Kiosk</option>
         </select>
         <input
           type="number"
@@ -163,6 +164,7 @@ export default function UsersPage() {
                   >
                     <option value="employee">Empleado</option>
                     <option value="admin">Administrador</option>
+                    <option value="kiosk">Kiosk</option>
                   </select>
                 </td>
                 <td>

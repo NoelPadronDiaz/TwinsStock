@@ -1,0 +1,146 @@
+.kiosk-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: var(--brand-black);
+  color: #ffffff;
+  padding: 24px;
+  position: relative;
+}
+
+.kiosk-icon-button {
+  position: absolute;
+  top: 16px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.kiosk-icon-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.kiosk-fullscreen-button {
+  right: 16px;
+}
+
+.kiosk-logout-button {
+  left: 16px;
+}
+
+.kiosk-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.kiosk-time {
+  font-size: 48px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.kiosk-date {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: capitalize;
+}
+
+.kiosk-qr-card {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 320px;
+  min-height: 320px;
+}
+
+.kiosk-qr-placeholder {
+  color: var(--muted-ink);
+  font-size: 14px;
+}
+
+.kiosk-hint {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+.kiosk-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0;
+}
+
+.clock-page {
+  gap: 0;
+}
+
+.clock-result-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+  border-radius: 20px;
+  padding: 48px 32px;
+  min-width: 280px;
+  text-align: center;
+}
+
+.clock-result-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  background: var(--success);
+  color: var(--success-ink);
+}
+
+.clock-result-icon.error {
+  background: var(--danger);
+  color: var(--danger-ink);
+}
+
+.clock-result-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.clock-result-time {
+  font-size: 40px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.clock-result-duration {
+  color: var(--secondary-ink);
+  margin: 0;
+}
+
+.clock-result-message {
+  color: var(--secondary-ink);
+  margin: 0;
+  max-width: 260px;
+}

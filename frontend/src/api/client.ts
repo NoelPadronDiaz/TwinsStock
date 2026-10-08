@@ -4,7 +4,7 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
 });
 
-export type UserRole = 'admin' | 'employee';
+export type UserRole = 'admin' | 'employee' | 'kiosk';
 export type UserTheme = 'light' | 'dark';
 
 export interface User {
@@ -16,6 +16,13 @@ export interface User {
   theme: UserTheme;
   weeklyHours: number | null;
   createdAt: string;
+}
+
+// Where each role lands after login (or when RoleRoute rejects it from a
+// page it can't see). Kiosk is a shared device account: it has no business
+// on the consumption/stock pages' landing route, only the QR screen.
+export function getHomeRoute(role: UserRole): string {
+  return role === 'kiosk' ? '/kiosk' : '/';
 }
 
 export interface AuthResponse {
@@ -348,3 +355,18 @@ export const replaceShiftTemplates = (
   api
     .put<ShiftTemplate[]>(`/shift-templates/${userId}`, { templates }, { params: { period } })
     .then((res) => res.data);
+
+export interface ClockTokenResponse {
+  token: string;
+}
+
+export const fetchClockToken = () => api.get<ClockTokenResponse>('/clock/token').then((res) => res.data);
+
+export interface PunchResult {
+  action: 'clock-in' | 'clock-out';
+  at: string;
+  clockIn: string;
+}
+
+export const punchClock = (token: string) =>
+  api.post<PunchResult>('/clock/punch', { token }).then((res) => res.data);

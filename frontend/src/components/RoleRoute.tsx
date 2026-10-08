@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { UserRole } from '../api/client';
+import { getHomeRoute, UserRole } from '../api/client';
 
 export default function RoleRoute({ roles, children }: { roles: UserRole[]; children: ReactNode }) {
   const { user } = useAuth();
@@ -13,7 +13,7 @@ export default function RoleRoute({ roles, children }: { roles: UserRole[]; chil
   }
 
   if (!roles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={getHomeRoute(user.role)} replace />;
   }
 
   return <>{children}</>;

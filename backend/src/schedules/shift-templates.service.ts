@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ShiftTemplateRowDto } from './dto/shift-template.dto';
 import { timeRangesOverlap } from './schedule-date.util';
+import { ShiftPeriod } from './shift-period';
 import { ShiftTemplate } from './shift-template.entity';
 
 @Injectable()
@@ -12,20 +13,22 @@ export class ShiftTemplatesService {
     private readonly templatesRepository: Repository<ShiftTemplate>,
   ) {}
 
+  // Both periods in one list — the caller (frontend edit modal) needs both
+  // at once and splits them by `period` itself.
   findForUser(userId: string) {
     return this.templatesRepository.find({
       where: { userId },
-      order: { weekday: 'ASC', startTime: 'ASC' },
+      order: { period: 'ASC', weekday: 'ASC', startTime: 'ASC' },
     });
   }
 
-  async replaceAll(userId: string, rows: ShiftTemplateRowDto[]) {
+  async replaceAll(userId: string, period: ShiftPeriod, rows: ShiftTemplateRowDto[]) {
     this.validateBatch(rows);
 
     return this.templatesRepository.manager.transaction(async (manager) => {
-      await manager.delete(ShiftTemplate, { userId });
+      await manager.delete(ShiftTemplate, { userId, period });
       if (rows.length === 0) return [];
-      const entities = rows.map((row) => manager.create(ShiftTemplate, { userId, ...row }));
+      const entities = rows.map((row) => manager.create(ShiftTemplate, { userId, period, ...row }));
       return manager.save(entities);
     });
   }

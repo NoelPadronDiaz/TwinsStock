@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsInt, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ShiftPeriod, SHIFT_PERIODS } from '../shift-period';
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -22,4 +23,9 @@ export class ReplaceShiftTemplatesDto {
   @ValidateNested({ each: true })
   @Type(() => ShiftTemplateRowDto)
   templates: ShiftTemplateRowDto[];
+}
+
+export class ShiftTemplatePeriodQueryDto {
+  @IsIn(SHIFT_PERIODS)
+  period: ShiftPeriod;
 }

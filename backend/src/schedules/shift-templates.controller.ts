@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Query } from '@nestjs/common';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { ReplaceShiftTemplatesDto } from './dto/shift-template.dto';
+import { ReplaceShiftTemplatesDto, ShiftTemplatePeriodQueryDto } from './dto/shift-template.dto';
 import { ShiftTemplatesService } from './shift-templates.service';
 
 @Controller('shift-templates')
@@ -14,7 +14,11 @@ export class ShiftTemplatesController {
   }
 
   @Put(':userId')
-  replaceAll(@Param('userId') userId: string, @Body() dto: ReplaceShiftTemplatesDto) {
-    return this.shiftTemplatesService.replaceAll(userId, dto.templates);
+  replaceAll(
+    @Param('userId') userId: string,
+    @Query() query: ShiftTemplatePeriodQueryDto,
+    @Body() dto: ReplaceShiftTemplatesDto,
+  ) {
+    return this.shiftTemplatesService.replaceAll(userId, query.period, dto.templates);
   }
 }

@@ -278,9 +278,12 @@ export interface Shift {
   user?: { id: string; name: string; username: string };
 }
 
+export type ShiftPeriod = 'morning' | 'afternoon';
+
 export interface ShiftTemplate {
   id: string;
   userId: string;
+  period: ShiftPeriod;
   weekday: number;
   startTime: string;
   endTime: string;
@@ -319,8 +322,14 @@ export const updateShift = (id: string, input: UpdateShiftInput) =>
 
 export const deleteShift = (id: string) => api.delete<void>(`/shifts/${id}`).then((res) => res.data);
 
-export const applyShiftTemplate = (userId: string, from: string, to: string) =>
-  api.post<ShiftRangeResult>('/shifts/apply-template', { userId, from, to }).then((res) => res.data);
+export interface TemplateAssignment {
+  from: string;
+  to: string;
+  period: ShiftPeriod;
+}
+
+export const applyShiftTemplate = (userId: string, assignments: TemplateAssignment[]) =>
+  api.post<ShiftRangeResult>('/shifts/apply-template', { userId, assignments }).then((res) => res.data);
 
 export const copyShiftWeek = (userId: string, sourceWeekStart: string, targetWeekStart: string) =>
   api
@@ -332,5 +341,9 @@ export const fetchShiftTemplates = (userId: string) =>
 
 export const replaceShiftTemplates = (
   userId: string,
+  period: ShiftPeriod,
   templates: { weekday: number; startTime: string; endTime: string }[],
-) => api.put<ShiftTemplate[]>(`/shift-templates/${userId}`, { templates }).then((res) => res.data);
+) =>
+  api
+    .put<ShiftTemplate[]>(`/shift-templates/${userId}`, { templates }, { params: { period } })
+    .then((res) => res.data);

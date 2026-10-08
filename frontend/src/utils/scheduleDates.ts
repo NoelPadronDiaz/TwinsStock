@@ -51,6 +51,32 @@ export function getMonthWeeks(year: number, month: number): string[][] {
   return weeks;
 }
 
+// Weeks (Monday-Sunday) overlapping the month, each clamped to the month's
+// own bounds — so a week straddling two months only ever reports the days
+// that actually belong to this one.
+export function getMonthWeekRanges(year: number, month: number): { from: string; to: string }[] {
+  const { start, end } = getMonthRange(year, month);
+  const firstWeekStart = getWeekStart(start);
+  const lastWeekStart = getWeekStart(end);
+
+  const ranges: { from: string; to: string }[] = [];
+  let cursor = firstWeekStart;
+  while (cursor <= lastWeekStart) {
+    const weekEnd = addDays(cursor, 6);
+    ranges.push({
+      from: cursor < start ? start : cursor,
+      to: weekEnd > end ? end : weekEnd,
+    });
+    cursor = addDays(cursor, 7);
+  }
+  return ranges;
+}
+
+export function formatShortDate(date: string): string {
+  const [, m, d] = date.split('-');
+  return `${d}/${m}`;
+}
+
 export function formatMinutes(totalMinutes: number): string {
   const minutes = Math.round(totalMinutes);
   const hours = Math.floor(minutes / 60);

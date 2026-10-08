@@ -112,38 +112,46 @@ export class ShiftsService {
 
   async applyTemplate(dto: ApplyTemplateDto): Promise<ShiftRangeResult> {
     const templates = await this.templatesRepository.find({ where: { userId: dto.userId } });
-    const byWeekday = new Map<number, ShiftTemplate[]>();
+    // Keyed by period first since each assignment only ever looks at one.
+    const byPeriodAndWeekday = new Map<string, Map<number, ShiftTemplate[]>>();
     for (const template of templates) {
+      const byWeekday = byPeriodAndWeekday.get(template.period) ?? new Map<number, ShiftTemplate[]>();
       const list = byWeekday.get(template.weekday) ?? [];
       list.push(template);
       byWeekday.set(template.weekday, list);
+      byPeriodAndWeekday.set(template.period, byWeekday);
     }
 
     const datesCreated: string[] = [];
     const datesSkipped: string[] = [];
 
     await this.shiftsRepository.manager.transaction(async (manager) => {
-      for (const date of enumerateDates(dto.from, dto.to)) {
-        const dayTemplates = byWeekday.get(isoWeekday(date));
-        if (!dayTemplates || dayTemplates.length === 0) continue;
+      for (const assignment of dto.assignments) {
+        const byWeekday = byPeriodAndWeekday.get(assignment.period);
+        if (!byWeekday) continue;
 
-        const existing = await manager.getRepository(Shift).count({ where: { userId: dto.userId, date } });
-        if (existing > 0) {
-          datesSkipped.push(date);
-          continue;
-        }
+        for (const date of enumerateDates(assignment.from, assignment.to)) {
+          const dayTemplates = byWeekday.get(isoWeekday(date));
+          if (!dayTemplates || dayTemplates.length === 0) continue;
 
-        for (const template of dayTemplates) {
-          await manager.save(
-            manager.create(Shift, {
-              userId: dto.userId,
-              date,
-              startTime: template.startTime,
-              endTime: template.endTime,
-            }),
-          );
+          const existing = await manager.getRepository(Shift).count({ where: { userId: dto.userId, date } });
+          if (existing > 0) {
+            datesSkipped.push(date);
+            continue;
+          }
+
+          for (const template of dayTemplates) {
+            await manager.save(
+              manager.create(Shift, {
+                userId: dto.userId,
+                date,
+                startTime: template.startTime,
+                endTime: template.endTime,
+              }),
+            );
+          }
+          datesCreated.push(date);
         }
-        datesCreated.push(date);
       }
     });
 

@@ -312,7 +312,7 @@ export default function SchedulesPage() {
       closeApplyTemplateModal();
       showFeedback(
         'success',
-        `Semana tipo aplicada: ${result.datesCreated.length} día(s) creados, ${result.datesSkipped.length} con turnos ya existentes.`,
+        `Semana tipo aplicada: ${result.datesCreated.length} día(s) creados, ${result.datesReplaced?.length ?? 0} sobrescritos.`,
       );
     } catch (err: any) {
       showFeedback('error', err.response?.data?.message ?? 'No se pudo aplicar la semana tipo.');
@@ -599,6 +599,10 @@ export default function SchedulesPage() {
               </button>
             </div>
             <div className="modal-body">
+              <p className="hint">
+                En las semanas que elijas, esto sustituye los turnos que ya hubiera esos días por los de la
+                semana tipo. Las semanas que dejes en "No aplicar" no se tocan.
+              </p>
               <div className="schedule-actions">
                 <button className="schedule-template-add" onClick={() => fillAlternating('morning')}>
                   Empezar con mañana

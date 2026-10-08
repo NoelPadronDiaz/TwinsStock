@@ -13,6 +13,7 @@ import { Shift } from './shift.entity';
 export interface ShiftRangeResult {
   datesCreated: string[];
   datesSkipped: string[];
+  datesReplaced?: string[];
 }
 
 @Injectable()
@@ -123,8 +124,15 @@ export class ShiftsService {
     }
 
     const datesCreated: string[] = [];
-    const datesSkipped: string[] = [];
+    const datesReplaced: string[] = [];
 
+    // Each assignment is a deliberate "this week is the morning/afternoon
+    // pattern now" choice, so — unlike copyWeek below — it must be allowed
+    // to replace whatever shifts are already there on the days its period's
+    // template actually covers; otherwise switching a week that already had
+    // shifts (e.g. historical data, or a previous apply) from one period to
+    // the other would silently do nothing on exactly those days. Days the
+    // chosen period has no template row for are left untouched either way.
     await this.shiftsRepository.manager.transaction(async (manager) => {
       for (const assignment of dto.assignments) {
         const byWeekday = byPeriodAndWeekday.get(assignment.period);
@@ -134,11 +142,7 @@ export class ShiftsService {
           const dayTemplates = byWeekday.get(isoWeekday(date));
           if (!dayTemplates || dayTemplates.length === 0) continue;
 
-          const existing = await manager.getRepository(Shift).count({ where: { userId: dto.userId, date } });
-          if (existing > 0) {
-            datesSkipped.push(date);
-            continue;
-          }
+          const { affected } = await manager.getRepository(Shift).delete({ userId: dto.userId, date });
 
           for (const template of dayTemplates) {
             await manager.save(
@@ -150,12 +154,17 @@ export class ShiftsService {
               }),
             );
           }
-          datesCreated.push(date);
+
+          if (affected) {
+            datesReplaced.push(date);
+          } else {
+            datesCreated.push(date);
+          }
         }
       }
     });
 
-    return { datesCreated, datesSkipped };
+    return { datesCreated, datesSkipped: [], datesReplaced };
   }
 
   async copyWeek(dto: CopyWeekDto): Promise<ShiftRangeResult> {

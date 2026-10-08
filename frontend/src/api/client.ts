@@ -292,6 +292,7 @@ export interface ShiftTemplate {
 export interface ShiftRangeResult {
   datesCreated: string[];
   datesSkipped: string[];
+  datesReplaced?: string[];
 }
 
 export const fetchShifts = (params: { userId?: string; from: string; to: string }) =>

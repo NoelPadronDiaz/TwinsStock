@@ -39,6 +39,8 @@ services:
       CORS_ORIGIN: http://localhost:5173
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env.docker}
       JWT_EXPIRES_IN: 12h
+      JWT_KIOSK_EXPIRES_IN: 30d
+      CLOCK_QR_SECRET: ${CLOCK_QR_SECRET:-dev-clock-secret-change-me}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en .env.docker}
       ADMIN_NAME: Administrador

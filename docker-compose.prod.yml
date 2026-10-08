@@ -10,6 +10,8 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:?Define CORS_ORIGIN en .env.prod}
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env.prod}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-12h}
+      JWT_KIOSK_EXPIRES_IN: ${JWT_KIOSK_EXPIRES_IN:-30d}
+      CLOCK_QR_SECRET: ${CLOCK_QR_SECRET:?Define CLOCK_QR_SECRET en .env.prod}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en .env.prod}
       ADMIN_NAME: ${ADMIN_NAME:-Administrador}

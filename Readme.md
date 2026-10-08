@@ -82,6 +82,14 @@ La app queda en `http://localhost:5173`.
   como consumo — para eso está "Registrar consumo".
 - **Panel de control** (`/dashboard`): totales por producto, tendencia en el
   tiempo (día/semana/mes) y tabla de datos, con filtros de rango de fechas.
+- **Fichaje por QR**: el rol `kiosk` (cuenta de un dispositivo compartido,
+  no de una persona) muestra en `/kiosk` un código QR que se renueva cada
+  30s. Cualquier empleado o admin lo escanea con su propio móvil (ya con
+  sesión iniciada) para abrir `/clock`, que registra automáticamente su
+  entrada o salida. `kiosk` no puede fichar ni ver Panel de control,
+  Usuarios u Horarios — solo las pantallas operativas del día a día
+  (Registrar consumo, Control de stock, Cesta de la compra, Productos) y
+  la del QR.
 
 ## API
 
@@ -103,6 +111,8 @@ Todas las rutas requieren un JWT (`Authorization: Bearer <token>`) **salvo**
 | GET | `/api/consumption-logs` | Lista registros recientes (filtros: `from`, `to`, `consumableId`, `limit`) |
 | GET | `/api/stats/summary` | Totales por producto en un rango (`from`, `to`) |
 | GET | `/api/stats/timeseries` | Serie temporal por producto (`from`, `to`, `groupBy=day\|week\|month`) |
+| GET | `/api/clock/token` | Token del QR de fichaje, caduca a los 60s (solo `admin`/`kiosk`) |
+| POST | `/api/clock/punch` | Registra entrada/salida de quien llama (`token` del QR); `kiosk` no puede fichar |
 
 ## Despliegue en Vercel
 
@@ -131,6 +141,10 @@ mismo repositorio de Git, cada uno con su propio "Root Directory".
      `https://twinsstock.vercel.app`).
    - `JWT_SECRET`: una cadena aleatoria larga (p. ej. `openssl rand -hex 32`).
      **Imprescindible cambiarla** del valor de ejemplo.
+   - `CLOCK_QR_SECRET`: otra cadena aleatoria larga, distinta de
+     `JWT_SECRET`, para el fichaje por QR. `JWT_KIOSK_EXPIRES_IN` es
+     opcional (por defecto `30d`, la duración de sesión de las cuentas
+     `kiosk`).
    - `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_NAME`: credenciales del
      admin inicial. Solo se usan la primera vez (tabla de usuarios vacía);
      después, cambia la contraseña desde la propia app.
@@ -262,6 +276,7 @@ Todo lo anterior aplica igual al compose de producción añadiendo
 | `JWT_SECRET` | Sí | Cualquier cadena en local |
 | `ADMIN_USERNAME` | No (`admin` por defecto) | |
 | `ADMIN_PASSWORD` | Sí | Solo se usa si la tabla de usuarios está vacía |
+| `CLOCK_QR_SECRET` | No (valor de ejemplo ya puesto) | Para el fichaje por QR, cualquier cadena en local |
 
 Las credenciales de Postgres y las URLs internas están fijas en
 `docker-compose.yml` (`twinsstock`/`twinsstock`/`twinsstock`, `DB_HOST=db`) —
@@ -275,9 +290,11 @@ no son secretos reales, no hace falta configurarlas.
 | `CORS_ORIGIN` | Sí | Origen real desde el que se sirve el frontend |
 | `JWT_SECRET` | Sí | Cadena aleatoria larga, distinta a la de desarrollo |
 | `ADMIN_PASSWORD` | Sí | Solo se usa si la tabla de usuarios está vacía |
+| `CLOCK_QR_SECRET` | Sí | Para el fichaje por QR, cadena aleatoria distinta a `JWT_SECRET` |
 | `ADMIN_USERNAME` | No (`admin`) | |
 | `ADMIN_NAME` | No (`Administrador`) | |
 | `JWT_EXPIRES_IN` | No (`12h`) | |
+| `JWT_KIOSK_EXPIRES_IN` | No (`30d`) | Duración de la sesión de las cuentas `kiosk` |
 | `APP_PORT` | No (`8080`) | Puerto del host para el frontend |
 | `DB_SSL` | No (`true`) | Pon `false` solo con el profile `local-db` |
 

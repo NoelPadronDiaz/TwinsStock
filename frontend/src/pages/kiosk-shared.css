@@ -35,8 +35,12 @@
   right: 16px;
 }
 
-.kiosk-logout-button {
+.kiosk-exit-button {
   left: 16px;
+}
+
+.kiosk-logout-button {
+  left: 72px;
 }
 
 .kiosk-clock {

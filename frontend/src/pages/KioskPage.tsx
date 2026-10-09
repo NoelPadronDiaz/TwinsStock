@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../auth/AuthContext';
 import { fetchClockToken } from '../api/client';
-import { ExpandIcon, PowerIcon } from '../components/icons';
+import { CloseIcon, ExpandIcon, PowerIcon } from '../components/icons';
 import './kiosk-shared.css';
 
 // Same business timezone the backend uses (backend/src/common/business-time.ts)
@@ -25,6 +26,7 @@ const timeFormatter = new Intl.DateTimeFormat('es-ES', {
 
 export default function KioskPage() {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -72,7 +74,15 @@ export default function KioskPage() {
       <button className="kiosk-icon-button kiosk-fullscreen-button" onClick={toggleFullscreen} aria-label="Pantalla completa">
         <ExpandIcon />
       </button>
-      <button className="kiosk-icon-button kiosk-logout-button" onClick={logout} aria-label="Cerrar sesión">
+      <button
+        className="kiosk-icon-button kiosk-exit-button"
+        onClick={() => navigate('/')}
+        aria-label="Salir del modo kiosco"
+        title="Salir del modo kiosco"
+      >
+        <CloseIcon />
+      </button>
+      <button className="kiosk-icon-button kiosk-logout-button" onClick={logout} aria-label="Cerrar sesión" title="Cerrar sesión">
         <PowerIcon />
       </button>
 

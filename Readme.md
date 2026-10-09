@@ -259,13 +259,24 @@ del backend ni se toca CORS.
 | Parar | `docker compose down` |
 | Parar y borrar también los volúmenes (incluida la BD) | `docker compose down -v` |
 | Ver logs de un servicio | `docker compose logs -f backend` |
-| Reconstruir tras cambiar dependencias (`package.json`) | `docker compose up --build backend` |
+| Traer código nuevo (`git pull`, cambio de rama) | nada — `src/` está montado en caliente, se recarga solo |
+| Nueva dependencia añadida a `package.json` | `docker compose exec backend npm install` (o `frontend`) |
+| `docker-compose.yml` cambiado (variable de entorno nueva, etc.) | `docker compose up -d backend` (recrea el contenedor, no hace falta `--build`) |
+| `Dockerfile` o ficheros fuera de `src/` cambiados (`vite.config.ts`, `tsconfig.json`...) | `docker compose up --build backend` |
 | Abrir una shell en un contenedor | `docker compose exec backend sh` |
 | Conectarse a Postgres (dev) | `docker compose exec db psql -U twinsstock -d twinsstock` (o un cliente externo a `localhost:5434`) |
 | Borrar la base de datos de desarrollo (empezar de cero) | `docker compose down -v` (vuelve a sembrar el admin en el próximo `up`) |
 
 Todo lo anterior aplica igual al compose de producción añadiendo
 `-f docker-compose.prod.yml --env-file .env.prod`.
+
+**Por qué `--build` solo no basta para una dependencia nueva:** `node_modules`
+vive en un volumen con nombre (`backend_node_modules`/`frontend_node_modules`),
+no en el `src/` montado — así que, aunque reconstruyas la imagen, el
+contenedor sigue arrancando con el volumen viejo por encima, tapando el
+`node_modules` recién instalado en la imagen. Instalar directamente dentro
+del contenedor (`docker compose exec ... npm install`) escribe en ese mismo
+volumen y no hace falta nada más.
 
 ### Variables de entorno
 

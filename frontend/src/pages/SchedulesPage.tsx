@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  applyShiftTemplate,
+  applyWeekTemplate,
   copyShiftWeek,
   createShift,
+  createWeekTemplate,
   deleteShift,
-  fetchShiftTemplates,
+  deleteWeekTemplate,
   fetchShifts,
   fetchUsers,
-  replaceShiftTemplates,
+  fetchWeekTemplates,
   Shift,
-  ShiftPeriod,
-  TemplateAssignment,
   updateShift,
+  updateWeekTemplate,
   User,
+  WeekTemplate,
+  WeekTemplateRow,
 } from '../api/client';
 import ScheduleMonthGrid from '../components/ScheduleMonthGrid';
 import { CloseIcon, EditIcon, TrashIcon } from '../components/icons';
@@ -21,32 +23,41 @@ import {
   formatMinutes,
   formatShortDate,
   getMonthRange,
-  getMonthWeekRanges,
   getWeekStart,
   monthLabel,
   toISODate,
+  WEEKDAY_SHORT_LABELS,
   weekdayLabel,
 } from '../utils/scheduleDates';
 import './schedule-shared.css';
 
-interface TemplateRow {
-  weekday: number;
-  startTime: string;
-  endTime: string;
-}
-
-const PERIOD_LABELS: Record<ShiftPeriod, string> = { morning: 'Mañana', afternoon: 'Tarde' };
-
-interface WeekAssignmentRow {
-  from: string;
-  to: string;
-  period: ShiftPeriod | '';
+interface TemplateEditorState {
+  id: string | null; // null = new template
+  name: string;
+  rows: WeekTemplateRow[];
 }
 
 function minutesBetween(startTime: string, endTime: string): number {
   const [sh, sm] = startTime.split(':').map(Number);
   const [eh, em] = endTime.split(':').map(Number);
   return eh * 60 + em - (sh * 60 + sm);
+}
+
+function summarizeTemplate(template: WeekTemplate): string {
+  if (template.rows.length === 0) return 'Sin tramos';
+  const days = [...new Set(template.rows.map((row) => row.weekday))]
+    .sort((a, b) => a - b)
+    .map((weekday) => WEEKDAY_SHORT_LABELS[weekday])
+    .join(', ');
+  const minutes = template.rows.reduce((sum, row) => sum + minutesBetween(row.startTime, row.endTime), 0);
+  return `${days} · ${formatMinutes(minutes)}`;
+}
+
+// Validation errors come back from class-validator as an array of messages.
+function apiErrorMessage(err: any, fallback: string): string {
+  const message = err?.response?.data?.message;
+  if (Array.isArray(message)) return message.join(' ');
+  return message ?? fallback;
 }
 
 function groupByDate(shifts: Shift[]): Map<string, Shift[]> {
@@ -81,17 +92,15 @@ export default function SchedulesPage() {
   const [editingShiftId, setEditingShiftId] = useState<string | null>(null);
   const [savingShift, setSavingShift] = useState(false);
 
-  const [templateModalOpen, setTemplateModalOpen] = useState(false);
-  const [templateTab, setTemplateTab] = useState<ShiftPeriod>('morning');
-  const [templateDrafts, setTemplateDrafts] = useState<Record<ShiftPeriod, TemplateRow[]>>({
-    morning: [],
-    afternoon: [],
-  });
+  const [weekTemplates, setWeekTemplates] = useState<WeekTemplate[]>([]);
+  const [templateEditor, setTemplateEditor] = useState<TemplateEditorState | null>(null);
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
 
-  const [applyTemplateModalOpen, setApplyTemplateModalOpen] = useState(false);
-  const [weekAssignments, setWeekAssignments] = useState<WeekAssignmentRow[]>([]);
+  const [applyWeekStart, setApplyWeekStart] = useState<string | null>(null);
+  const [applyTemplateId, setApplyTemplateId] = useState<string | null>(null);
   const [applyingTemplate, setApplyingTemplate] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   const [copyWeekOpen, setCopyWeekOpen] = useState(false);
   const [copySource, setCopySource] = useState('');
@@ -136,11 +145,17 @@ export default function SchedulesPage() {
     }
   };
 
+  const loadTemplates = async (userId: string) => {
+    setWeekTemplates(await fetchWeekTemplates(userId));
+  };
+
   const openEmployee = (userId: string) => {
     setSelectedUserId(userId);
     setViewYear(today.getFullYear());
     setViewMonth(today.getMonth());
+    setWeekTemplates([]);
     loadMonth(userId, today.getFullYear(), today.getMonth());
+    loadTemplates(userId);
   };
 
   const changeMonth = (delta: number) => {
@@ -224,98 +239,98 @@ export default function SchedulesPage() {
     await loadEmployeesAndWeek();
   };
 
-  const openTemplateModal = async () => {
-    if (!selectedUserId) return;
-    const rows = await fetchShiftTemplates(selectedUserId);
-    const toRows = (period: ShiftPeriod) =>
-      rows.filter((r) => r.period === period).map((r) => ({ weekday: r.weekday, startTime: r.startTime, endTime: r.endTime }));
-    setTemplateDrafts({ morning: toRows('morning'), afternoon: toRows('afternoon') });
-    setTemplateTab('morning');
-    setTemplateModalOpen(true);
+  const openNewTemplate = () => {
+    setTemplateEditor({ id: null, name: '', rows: [] });
+    setTemplateError(null);
   };
 
-  const closeTemplateModal = () => {
-    setTemplateModalOpen(false);
-    setTemplateDrafts({ morning: [], afternoon: [] });
+  const openEditTemplate = (template: WeekTemplate) => {
+    setTemplateEditor({ id: template.id, name: template.name, rows: template.rows.map((row) => ({ ...row })) });
+    setTemplateError(null);
+  };
+
+  const closeTemplateEditor = () => {
+    setTemplateEditor(null);
+    setTemplateError(null);
   };
 
   const addTemplateRow = (weekday: number) => {
-    setTemplateDrafts((prev) => ({
-      ...prev,
-      [templateTab]: [...prev[templateTab], { weekday, startTime: '09:15', endTime: '14:15' }],
-    }));
+    setTemplateEditor((prev) =>
+      prev && { ...prev, rows: [...prev.rows, { weekday, startTime: '09:15', endTime: '14:15' }] },
+    );
   };
 
   const updateTemplateRow = (index: number, field: 'startTime' | 'endTime', value: string) => {
-    setTemplateDrafts((prev) => ({
-      ...prev,
-      [templateTab]: prev[templateTab].map((row, i) => (i === index ? { ...row, [field]: value } : row)),
-    }));
+    setTemplateEditor((prev) =>
+      prev && { ...prev, rows: prev.rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)) },
+    );
   };
 
   const removeTemplateRow = (index: number) => {
-    setTemplateDrafts((prev) => ({
-      ...prev,
-      [templateTab]: prev[templateTab].filter((_, i) => i !== index),
-    }));
+    setTemplateEditor((prev) => prev && { ...prev, rows: prev.rows.filter((_, i) => i !== index) });
   };
 
   const saveTemplate = async () => {
-    if (!selectedUserId) return;
+    if (!selectedUserId || !templateEditor) return;
     setSavingTemplate(true);
+    setTemplateError(null);
     try {
-      await Promise.all([
-        replaceShiftTemplates(selectedUserId, 'morning', templateDrafts.morning),
-        replaceShiftTemplates(selectedUserId, 'afternoon', templateDrafts.afternoon),
-      ]);
-      closeTemplateModal();
-      showFeedback('success', 'Semanas tipo guardadas.');
-    } catch (err: any) {
-      showFeedback('error', err.response?.data?.message ?? 'No se pudo guardar la semana tipo.');
+      const input = { name: templateEditor.name.trim(), rows: templateEditor.rows };
+      if (templateEditor.id) {
+        await updateWeekTemplate(templateEditor.id, input);
+      } else {
+        await createWeekTemplate(selectedUserId, input);
+      }
+      await loadTemplates(selectedUserId);
+      closeTemplateEditor();
+      showFeedback('success', 'Plantilla guardada.');
+    } catch (err) {
+      setTemplateError(apiErrorMessage(err, 'No se pudo guardar la plantilla.'));
     } finally {
       setSavingTemplate(false);
     }
   };
 
-  const openApplyTemplateModal = () => {
-    const ranges = getMonthWeekRanges(viewYear, viewMonth);
-    setWeekAssignments(ranges.map((r) => ({ ...r, period: '' })));
-    setApplyTemplateModalOpen(true);
-  };
-
-  const closeApplyTemplateModal = () => {
-    setApplyTemplateModalOpen(false);
-    setWeekAssignments([]);
-  };
-
-  const setWeekAssignmentPeriod = (index: number, period: ShiftPeriod | '') => {
-    setWeekAssignments((prev) => prev.map((row, i) => (i === index ? { ...row, period } : row)));
-  };
-
-  const fillAlternating = (startWith: ShiftPeriod) => {
-    const other: ShiftPeriod = startWith === 'morning' ? 'afternoon' : 'morning';
-    setWeekAssignments((prev) => prev.map((row, i) => ({ ...row, period: i % 2 === 0 ? startWith : other })));
-  };
-
-  const handleApplyTemplate = async () => {
+  const handleDeleteTemplate = async (template: WeekTemplate) => {
     if (!selectedUserId) return;
-    const assignments: TemplateAssignment[] = weekAssignments
-      .filter((row): row is WeekAssignmentRow & { period: ShiftPeriod } => row.period !== '')
-      .map((row) => ({ from: row.from, to: row.to, period: row.period }));
-    if (assignments.length === 0) return;
-
-    setApplyingTemplate(true);
+    if (!window.confirm(`¿Borrar la plantilla «${template.name}»? Los turnos ya aplicados no se tocan.`)) return;
     try {
-      const result = await applyShiftTemplate(selectedUserId, assignments);
+      await deleteWeekTemplate(template.id);
+      await loadTemplates(selectedUserId);
+      showFeedback('success', 'Plantilla borrada.');
+    } catch (err) {
+      showFeedback('error', apiErrorMessage(err, 'No se pudo borrar la plantilla.'));
+    }
+  };
+
+  const openApplyWeek = (weekStart: string) => {
+    setApplyWeekStart(weekStart);
+    setApplyTemplateId(weekTemplates.length === 1 ? weekTemplates[0].id : null);
+    setApplyError(null);
+  };
+
+  const closeApplyWeek = () => {
+    setApplyWeekStart(null);
+    setApplyTemplateId(null);
+    setApplyError(null);
+  };
+
+  const handleApplyWeek = async () => {
+    if (!selectedUserId || !applyWeekStart || !applyTemplateId) return;
+    setApplyingTemplate(true);
+    setApplyError(null);
+    try {
+      const result = await applyWeekTemplate(applyTemplateId, applyWeekStart);
+      const name = weekTemplates.find((t) => t.id === applyTemplateId)?.name ?? '';
       await loadMonth(selectedUserId, viewYear, viewMonth);
       await loadEmployeesAndWeek();
-      closeApplyTemplateModal();
+      closeApplyWeek();
       showFeedback(
         'success',
-        `Semana tipo aplicada: ${result.datesCreated.length} día(s) creados, ${result.datesReplaced?.length ?? 0} sobrescritos.`,
+        `Plantilla «${name}» aplicada a la semana del ${formatShortDate(result.weekStart)} al ${formatShortDate(result.weekEnd)}.`,
       );
-    } catch (err: any) {
-      showFeedback('error', err.response?.data?.message ?? 'No se pudo aplicar la semana tipo.');
+    } catch (err) {
+      setApplyError(apiErrorMessage(err, 'No se pudo aplicar la plantilla.'));
     } finally {
       setApplyingTemplate(false);
     }
@@ -410,24 +425,65 @@ export default function SchedulesPage() {
           </button>
         </div>
         <div className="schedule-actions">
-          <button className="preset-button" onClick={openApplyTemplateModal}>
-            Aplicar semana tipo al mes
-          </button>
           <button className="preset-button" onClick={openCopyWeek}>
             Copiar semana anterior
-          </button>
-          <button className="preset-button" onClick={openTemplateModal}>
-            Editar semana tipo
           </button>
         </div>
       </div>
 
       {feedback && <div className={`feedback ${feedback.type === 'error' ? 'feedback-error' : ''}`}>{feedback.text}</div>}
 
+      <section className="schedule-templates">
+        <div className="schedule-templates-header">
+          <h3>Plantillas de semana</h3>
+          <button className="preset-button" onClick={openNewTemplate}>
+            + Nueva plantilla
+          </button>
+        </div>
+        {weekTemplates.length === 0 ? (
+          <p className="hint">
+            Aún no hay plantillas. Crea una y aplícala a cualquier semana con «Aplicar semana».
+          </p>
+        ) : (
+          <ul className="schedule-template-list">
+            {weekTemplates.map((template) => (
+              <li key={template.id} className="schedule-template-item">
+                <div className="schedule-template-info">
+                  <span className="schedule-template-name">{template.name}</span>
+                  <span className="schedule-template-summary">{summarizeTemplate(template)}</span>
+                </div>
+                <div className="schedule-shift-row-actions">
+                  <button
+                    className="icon-button"
+                    onClick={() => openEditTemplate(template)}
+                    aria-label={`Editar plantilla ${template.name}`}
+                  >
+                    <EditIcon />
+                  </button>
+                  <button
+                    className="icon-button icon-button-danger"
+                    onClick={() => handleDeleteTemplate(template)}
+                    aria-label={`Borrar plantilla ${template.name}`}
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {monthLoading ? (
         <p>Cargando mes...</p>
       ) : (
-        <ScheduleMonthGrid year={viewYear} month={viewMonth} shiftsByDate={shiftsByDate} onDayClick={openDayModal} />
+        <ScheduleMonthGrid
+          year={viewYear}
+          month={viewMonth}
+          shiftsByDate={shiftsByDate}
+          onDayClick={openDayModal}
+          onApplyWeek={openApplyWeek}
+        />
       )}
 
       {dayModalDate && (
@@ -521,35 +577,32 @@ export default function SchedulesPage() {
         </div>
       )}
 
-      {templateModalOpen && (
-        <div className="modal-overlay" onClick={closeTemplateModal}>
+      {templateEditor && (
+        <div className="modal-overlay" onClick={closeTemplateEditor}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Semanas tipo de {selectedEmployee.name}</h3>
-              <button className="modal-close" onClick={closeTemplateModal} aria-label="Cerrar">
+              <h3>{templateEditor.id ? 'Editar plantilla' : 'Nueva plantilla'}</h3>
+              <button className="modal-close" onClick={closeTemplateEditor} aria-label="Cerrar">
                 <CloseIcon />
               </button>
             </div>
-            <div className="market-tabs" role="tablist">
-              {(['morning', 'afternoon'] as ShiftPeriod[]).map((period) => (
-                <button
-                  key={period}
-                  type="button"
-                  role="tab"
-                  aria-selected={templateTab === period}
-                  className={templateTab === period ? 'market-tab active' : 'market-tab'}
-                  onClick={() => setTemplateTab(period)}
-                >
-                  {PERIOD_LABELS[period]}
-                </button>
-              ))}
-            </div>
             <div className="modal-body">
+              <label className="modal-field">
+                Nombre
+                <input
+                  type="text"
+                  value={templateEditor.name}
+                  placeholder="Ej.: Mañana, Tarde, Fin de semana…"
+                  maxLength={60}
+                  autoFocus
+                  onChange={(e) => setTemplateEditor({ ...templateEditor, name: e.target.value })}
+                />
+              </label>
               {[0, 1, 2, 3, 4, 5, 6].map((weekday) => (
                 <div className="schedule-template-day" key={weekday}>
                   <span className="schedule-template-day-label">{weekdayLabel(weekday)}</span>
                   <div className="schedule-template-rows">
-                    {templateDrafts[templateTab]
+                    {templateEditor.rows
                       .map((row, index) => ({ row, index }))
                       .filter(({ row }) => row.weekday === weekday)
                       .map(({ row, index }) => (
@@ -576,71 +629,89 @@ export default function SchedulesPage() {
                 </div>
               ))}
             </div>
+            {templateError && <div className="feedback feedback-error">{templateError}</div>}
+
             <div className="modal-actions">
               <div className="modal-actions-spacer" />
-              <button className="modal-cancel" onClick={closeTemplateModal}>
+              <button className="modal-cancel" onClick={closeTemplateEditor}>
                 Cancelar
               </button>
-              <button className="modal-save" disabled={savingTemplate} onClick={saveTemplate}>
-                {savingTemplate ? 'Guardando...' : 'Guardar las dos'}
+              <button
+                className="modal-save"
+                disabled={savingTemplate || templateEditor.name.trim() === ''}
+                onClick={saveTemplate}
+              >
+                {savingTemplate ? 'Guardando...' : 'Guardar'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {applyTemplateModalOpen && (
-        <div className="modal-overlay" onClick={closeApplyTemplateModal}>
+      {applyWeekStart && (
+        <div className="modal-overlay" onClick={closeApplyWeek}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Aplicar semana tipo — {monthLabel(viewMonth)} {viewYear}</h3>
-              <button className="modal-close" onClick={closeApplyTemplateModal} aria-label="Cerrar">
+              <h3>
+                Aplicar semana del {formatShortDate(applyWeekStart)} al {formatShortDate(addDays(applyWeekStart, 6))}
+              </h3>
+              <button className="modal-close" onClick={closeApplyWeek} aria-label="Cerrar">
                 <CloseIcon />
               </button>
             </div>
             <div className="modal-body">
-              <p className="hint">
-                En las semanas que elijas, esto sustituye los turnos que ya hubiera esos días por los de la
-                semana tipo. Las semanas que dejes en "No aplicar" no se tocan.
-              </p>
-              <div className="schedule-actions">
-                <button className="schedule-template-add" onClick={() => fillAlternating('morning')}>
-                  Empezar con mañana
-                </button>
-                <button className="schedule-template-add" onClick={() => fillAlternating('afternoon')}>
-                  Empezar con tarde
-                </button>
-              </div>
-              <ul className="schedule-week-list">
-                {weekAssignments.map((row, index) => (
-                  <li key={index} className="schedule-week-row">
-                    <span className="schedule-week-day">
-                      {formatShortDate(row.from)} – {formatShortDate(row.to)}
-                    </span>
-                    <select
-                      value={row.period}
-                      onChange={(e) => setWeekAssignmentPeriod(index, e.target.value as ShiftPeriod | '')}
-                    >
-                      <option value="">No aplicar</option>
-                      <option value="morning">Mañana</option>
-                      <option value="afternoon">Tarde</option>
-                    </select>
-                  </li>
-                ))}
-              </ul>
+              {weekTemplates.length === 0 ? (
+                <>
+                  <p className="hint">{selectedEmployee.name} todavía no tiene plantillas de semana.</p>
+                  <button
+                    className="preset-button"
+                    onClick={() => {
+                      closeApplyWeek();
+                      openNewTemplate();
+                    }}
+                  >
+                    + Crear plantilla
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="hint">
+                    Los turnos de esa semana (de lunes a domingo) se sustituyen por los de la plantilla; los días que
+                    la plantilla no tiene quedan libres. Después puedes retocar cualquier día.
+                  </p>
+                  <ul className="schedule-template-list">
+                    {weekTemplates.map((template) => (
+                      <li key={template.id}>
+                        <button
+                          type="button"
+                          className={
+                            applyTemplateId === template.id ? 'schedule-template-option selected' : 'schedule-template-option'
+                          }
+                          aria-pressed={applyTemplateId === template.id}
+                          onClick={() => setApplyTemplateId(template.id)}
+                        >
+                          <span className="schedule-template-name">{template.name}</span>
+                          <span className="schedule-template-summary">{summarizeTemplate(template)}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
+
+            {applyError && <div className="feedback feedback-error">{applyError}</div>}
+
             <div className="modal-actions">
               <div className="modal-actions-spacer" />
-              <button className="modal-cancel" onClick={closeApplyTemplateModal}>
+              <button className="modal-cancel" onClick={closeApplyWeek}>
                 Cancelar
               </button>
-              <button
-                className="modal-save"
-                disabled={applyingTemplate || weekAssignments.every((row) => row.period === '')}
-                onClick={handleApplyTemplate}
-              >
-                {applyingTemplate ? 'Aplicando...' : 'Aplicar'}
-              </button>
+              {weekTemplates.length > 0 && (
+                <button className="modal-save" disabled={applyingTemplate || !applyTemplateId} onClick={handleApplyWeek}>
+                  {applyingTemplate ? 'Aplicando...' : 'Aplicar'}
+                </button>
+              )}
             </div>
           </div>
         </div>

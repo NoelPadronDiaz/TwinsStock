@@ -7,14 +7,13 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { timeColumnTransformer } from '../common/time-column.transformer';
-import { ShiftPeriod } from './shift-period';
 import { User } from '../users/user.entity';
+import { WeekTemplate } from './week-template.entity';
 
-// weekday: 0 = Monday ... 6 = Sunday (ISO-style, matches Postgres date_trunc('week', ...)).
-// period: which of the two alternating weekly patterns this row belongs to.
-// Default 'morning' backfills existing rows (predates this column) safely.
+// One time range of a WeekTemplate. weekday: 0 = Monday ... 6 = Sunday
+// (ISO-style, matches Postgres date_trunc('week', ...)).
 @Entity('shift_templates')
-@Index(['userId', 'period', 'weekday'])
+@Index(['weekTemplateId', 'weekday'])
 export class ShiftTemplate {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -26,8 +25,20 @@ export class ShiftTemplate {
   @Column({ name: 'user_id' })
   userId: string;
 
+  // Nullable only so synchronize can add it to existing rows; the startup
+  // backfill in WeekTemplatesService fills it, and new rows always set it.
+  @ManyToOne(() => WeekTemplate, (template) => template.rows, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'week_template_id' })
+  weekTemplate: WeekTemplate | null;
+
+  @Column({ name: 'week_template_id', type: 'uuid', nullable: true })
+  weekTemplateId: string | null;
+
+  // Legacy 'morning' | 'afternoon' from the two-fixed-templates era. Kept in
+  // the entity (removing it would make synchronize drop the column before the
+  // backfill can read it to name the migrated templates). Not used otherwise.
   @Column({ type: 'varchar', default: 'morning' })
-  period: ShiftPeriod;
+  period: string;
 
   @Column({ type: 'int' })
   weekday: number;

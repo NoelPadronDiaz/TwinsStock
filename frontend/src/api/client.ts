@@ -285,21 +285,23 @@ export interface Shift {
   user?: { id: string; name: string; username: string };
 }
 
-export type ShiftPeriod = 'morning' | 'afternoon';
-
-export interface ShiftTemplate {
-  id: string;
-  userId: string;
-  period: ShiftPeriod;
-  weekday: number;
+export interface WeekTemplateRow {
+  weekday: number; // 0 = Monday ... 6 = Sunday
   startTime: string;
   endTime: string;
+}
+
+export interface WeekTemplate {
+  id: string;
+  userId: string;
+  name: string;
+  rows: WeekTemplateRow[];
+  createdAt: string;
 }
 
 export interface ShiftRangeResult {
   datesCreated: string[];
   datesSkipped: string[];
-  datesReplaced?: string[];
 }
 
 export const fetchShifts = (params: { userId?: string; from: string; to: string }) =>
@@ -330,30 +332,38 @@ export const updateShift = (id: string, input: UpdateShiftInput) =>
 
 export const deleteShift = (id: string) => api.delete<void>(`/shifts/${id}`).then((res) => res.data);
 
-export interface TemplateAssignment {
-  from: string;
-  to: string;
-  period: ShiftPeriod;
-}
-
-export const applyShiftTemplate = (userId: string, assignments: TemplateAssignment[]) =>
-  api.post<ShiftRangeResult>('/shifts/apply-template', { userId, assignments }).then((res) => res.data);
-
 export const copyShiftWeek = (userId: string, sourceWeekStart: string, targetWeekStart: string) =>
   api
     .post<ShiftRangeResult>('/shifts/copy-week', { userId, sourceWeekStart, targetWeekStart })
     .then((res) => res.data);
 
-export const fetchShiftTemplates = (userId: string) =>
-  api.get<ShiftTemplate[]>(`/shift-templates/${userId}`).then((res) => res.data);
+export const fetchWeekTemplates = (userId: string) =>
+  api.get<WeekTemplate[]>('/week-templates', { params: { userId } }).then((res) => res.data);
 
-export const replaceShiftTemplates = (
-  userId: string,
-  period: ShiftPeriod,
-  templates: { weekday: number; startTime: string; endTime: string }[],
-) =>
+export interface WeekTemplateInput {
+  name: string;
+  rows: WeekTemplateRow[];
+}
+
+export const createWeekTemplate = (userId: string, input: WeekTemplateInput) =>
+  api.post<WeekTemplate>('/week-templates', { userId, ...input }).then((res) => res.data);
+
+export const updateWeekTemplate = (id: string, input: WeekTemplateInput) =>
+  api.put<WeekTemplate>(`/week-templates/${id}`, input).then((res) => res.data);
+
+export const deleteWeekTemplate = (id: string) =>
+  api.delete<void>(`/week-templates/${id}`).then((res) => res.data);
+
+export interface ApplyWeekTemplateResult {
+  weekStart: string;
+  weekEnd: string;
+  shiftsRemoved: number;
+  shiftsCreated: number;
+}
+
+export const applyWeekTemplate = (weekTemplateId: string, weekStart: string) =>
   api
-    .put<ShiftTemplate[]>(`/shift-templates/${userId}`, { templates }, { params: { period } })
+    .post<ApplyWeekTemplateResult>('/shifts/apply-week-template', { weekTemplateId, weekStart })
     .then((res) => res.data);
 
 export interface ClockTokenResponse {

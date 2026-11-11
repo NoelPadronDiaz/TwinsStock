@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { toBusinessDate } from '../common/business-time';
 import { User } from '../users/user.entity';
 import { ClockTokenService } from './clock-token.service';
 import { TimeEntry } from './time-entry.entity';
@@ -83,7 +84,7 @@ export class ClockService {
         }
       }
 
-      const entry = manager.create(TimeEntry, { userId, clockIn: now });
+      const entry = manager.create(TimeEntry, { userId, clockIn: now, workDate: toBusinessDate(now) });
       await manager.save(entry);
       return { action: 'clock-in' as const, at: now, clockIn: now };
     });

@@ -1,4 +1,11 @@
-import { ConflictException, Injectable, Logger, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -8,6 +15,12 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './user.entity';
 
 const SALT_ROUNDS = 10;
+
+// NIF/NAF: trimmed and upper-cased; empty means "not set".
+function normalizeId(value: string | null | undefined): string | null {
+  const trimmed = value?.trim().toUpperCase();
+  return trimmed ? trimmed : null;
+}
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -54,6 +67,27 @@ export class UsersService implements OnModuleInit {
     return this.usersRepository.find({ order: { createdAt: 'ASC' } });
   }
 
+  // Admin view: same as findAll plus the select: false personal fields.
+  findAllWithPersonalData() {
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect(['user.nif', 'user.naf'])
+      .orderBy('user.createdAt', 'ASC')
+      .getMany();
+  }
+
+  async findOneWithPersonalData(id: string) {
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect(['user.nif', 'user.naf'])
+      .where('user.id = :id', { id })
+      .getOne();
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado.');
+    }
+    return user;
+  }
+
   findByUsername(username: string) {
     return this.usersRepository.findOne({ where: { username } });
   }
@@ -74,6 +108,9 @@ export class UsersService implements OnModuleInit {
         name: dto.name,
         role: dto.role,
         weeklyHours: dto.weeklyHours ?? null,
+        contractType: dto.contractType ?? null,
+        nif: normalizeId(dto.nif),
+        naf: normalizeId(dto.naf),
         passwordHash: await bcrypt.hash(dto.password, SALT_ROUNDS),
       }),
     );
@@ -87,6 +124,9 @@ export class UsersService implements OnModuleInit {
     if (dto.active !== undefined) user.active = dto.active;
     if (dto.theme !== undefined) user.theme = dto.theme;
     if (dto.weeklyHours !== undefined) user.weeklyHours = dto.weeklyHours;
+    if (dto.contractType !== undefined) user.contractType = dto.contractType;
+    if (dto.nif !== undefined) user.nif = normalizeId(dto.nif);
+    if (dto.naf !== undefined) user.naf = normalizeId(dto.naf);
     if (dto.password) user.passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
     return this.usersRepository.save(user);

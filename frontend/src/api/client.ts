@@ -6,6 +6,7 @@ export const api = axios.create({
 
 export type UserRole = 'admin' | 'employee' | 'kiosk';
 export type UserTheme = 'light' | 'dark';
+export type ContractType = 'full_time' | 'part_time';
 
 export interface User {
   id: string;
@@ -15,6 +16,10 @@ export interface User {
   active: boolean;
   theme: UserTheme;
   weeklyHours: number | null;
+  contractType: ContractType | null;
+  // Only present in the admin /users responses, never in the login one.
+  nif?: string | null;
+  naf?: string | null;
   createdAt: string;
 }
 
@@ -255,6 +260,9 @@ export interface CreateUserInput {
   password: string;
   role: UserRole;
   weeklyHours?: number;
+  contractType?: ContractType | null;
+  nif?: string | null;
+  naf?: string | null;
 }
 
 export const createUser = (input: CreateUserInput) =>
@@ -266,6 +274,9 @@ export interface UpdateUserInput {
   active?: boolean;
   password?: string;
   weeklyHours?: number;
+  contractType?: ContractType | null;
+  nif?: string | null;
+  naf?: string | null;
 }
 
 export const updateUser = (id: string, input: UpdateUserInput) =>
@@ -380,3 +391,104 @@ export interface PunchResult {
 
 export const punchClock = (token: string) =>
   api.post<PunchResult>('/clock/punch', { token }).then((res) => res.data);
+
+export interface CompanySettings {
+  legalName: string | null;
+  cif: string | null;
+  ccc: string | null;
+}
+
+export const fetchCompanySettings = () => api.get<CompanySettings>('/company-settings').then((res) => res.data);
+
+export const updateCompanySettings = (input: CompanySettings) =>
+  api.put<CompanySettings>('/company-settings', input).then((res) => res.data);
+
+export type TimeBlock = 'morning' | 'afternoon';
+
+export interface MonthTimeEntry {
+  id: string;
+  clockIn: string;
+  clockOut: string | null;
+  start: string; // HH:mm local
+  end: string | null;
+  block: TimeBlock;
+  minutes: number | null;
+  corrected: boolean;
+  pendingCorrection: boolean;
+}
+
+export interface MonthTimeDay {
+  date: string;
+  entries: MonthTimeEntry[];
+  totalMinutes: number;
+  issues: string[];
+}
+
+export interface TimeEntriesMonth {
+  user: { id: string; name: string };
+  year: number;
+  month: number; // 1-12
+  days: MonthTimeDay[];
+  totalMinutes: number;
+  issues: { date: string; message: string }[];
+}
+
+// userId null = the logged-in user's own entries.
+export const fetchTimeEntriesMonth = (userId: string | null, year: number, month: number) =>
+  api
+    .get<TimeEntriesMonth>(userId ? '/time-entries/month' : '/time-entries/month/me', {
+      params: { ...(userId ? { userId } : {}), year, month },
+    })
+    .then((res) => res.data);
+
+export interface TimeSheetSlot {
+  in: string;
+  out: string | null;
+}
+
+export interface TimeSheet {
+  company: CompanySettings;
+  employee: { name: string; nif: string | null; naf: string | null };
+  year: number;
+  month: number;
+  rows: { day: number; morning: TimeSheetSlot | null; afternoon: TimeSheetSlot | null; totalMinutes: number | null }[];
+  totalMinutes: number;
+  issues: { date: string; message: string }[];
+}
+
+export const fetchTimeSheet = (userId: string | null, year: number, month: number) =>
+  api
+    .get<TimeSheet>(userId ? '/time-entries/sheet' : '/time-entries/sheet/me', {
+      params: { ...(userId ? { userId } : {}), year, month },
+    })
+    .then((res) => res.data);
+
+// Local date 'YYYY-MM-DD' + 'HH:mm' times; no clockOut = still open.
+export interface TimeEntryInput {
+  date: string;
+  clockIn: string;
+  clockOut: string | null;
+  reason: string;
+}
+
+export const createTimeEntry = (userId: string, input: TimeEntryInput) =>
+  api.post<{ id: string }>('/time-entries', { userId, ...input }).then((res) => res.data);
+
+export const updateTimeEntry = (id: string, input: TimeEntryInput) =>
+  api.patch<{ id: string }>(`/time-entries/${id}`, input).then((res) => res.data);
+
+export const deleteTimeEntry = (id: string, reason: string) =>
+  api.delete<void>(`/time-entries/${id}`, { data: { reason } }).then((res) => res.data);
+
+export interface TimeEntryEdit {
+  id: string;
+  action: 'create' | 'update' | 'delete';
+  reason: string;
+  editedBy: string | null;
+  createdAt: string;
+  previous: string | null;
+  next: string | null;
+}
+
+export const fetchTimeEntryEdits = (id: string) =>
+  api.get<TimeEntryEdit[]>(`/time-entries/${id}/edits`).then((res) => res.data);

@@ -13,6 +13,8 @@ import RegisterPage from './pages/RegisterPage';
 import SchedulesPage from './pages/SchedulesPage';
 import ShoppingListPage from './pages/ShoppingListPage';
 import StockPage from './pages/StockPage';
+import TimeEntriesPage from './pages/TimeEntriesPage';
+import TimeSheetPrintPage from './pages/TimeSheetPrintPage';
 import UsersPage from './pages/UsersPage';
 
 export default function App() {
@@ -36,6 +38,14 @@ export default function App() {
             </RoleRoute>
           }
         />
+        <Route
+          path="/fichajes/imprimir"
+          element={
+            <RoleRoute roles={['admin', 'employee']}>
+              <TimeSheetPrintPage />
+            </RoleRoute>
+          }
+        />
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<RegisterPage />} />
           <Route path="/stock" element={<StockPage />} />
@@ -54,6 +64,14 @@ export default function App() {
             element={
               <RoleRoute roles={['admin', 'employee']}>
                 <MySchedulePage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/fichajes"
+            element={
+              <RoleRoute roles={['admin', 'employee']}>
+                <TimeEntriesPage />
               </RoleRoute>
             }
           />

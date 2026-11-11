@@ -1,10 +1,23 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { createUser, CreateUserInput, fetchUsers, updateUser, User, UserRole } from '../api/client';
+import {
+  CompanySettings,
+  ContractType,
+  createUser,
+  CreateUserInput,
+  fetchCompanySettings,
+  fetchUsers,
+  updateCompanySettings,
+  updateUser,
+  UpdateUserInput,
+  User,
+  UserRole,
+} from '../api/client';
 import { MoonIcon, SunIcon } from '../components/icons';
 
 const dateFormatter = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' });
 
 const emptyForm: CreateUserInput = { username: '', name: '', password: '', role: 'employee' };
+const emptyCompany: CompanySettings = { legalName: '', cif: '', ccc: '' };
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -14,11 +27,52 @@ export default function UsersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
 
+  const [company, setCompany] = useState<CompanySettings>(emptyCompany);
+  const [savingCompany, setSavingCompany] = useState(false);
+  const [companyFeedback, setCompanyFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const loadUsers = () => fetchUsers().then((data) => setUsers(data));
 
   useEffect(() => {
-    loadUsers().finally(() => setLoading(false));
+    Promise.all([
+      loadUsers(),
+      fetchCompanySettings().then((data) =>
+        setCompany({ legalName: data.legalName ?? '', cif: data.cif ?? '', ccc: data.ccc ?? '' }),
+      ),
+    ]).finally(() => setLoading(false));
   }, []);
+
+  const saveField = async (user: User, input: UpdateUserInput) => {
+    setPendingId(user.id);
+    try {
+      await updateUser(user.id, input);
+      await loadUsers();
+    } finally {
+      setPendingId(null);
+    }
+  };
+
+  // NIF/NAF inputs save on blur, only when the value actually changed.
+  const changeIdField = (user: User, field: 'nif' | 'naf', value: string) => {
+    const next = value.trim().toUpperCase() || null;
+    if (next === (user[field] ?? null)) return;
+    saveField(user, { [field]: next });
+  };
+
+  const saveCompany = async (event: FormEvent) => {
+    event.preventDefault();
+    setSavingCompany(true);
+    setCompanyFeedback(null);
+    try {
+      const saved = await updateCompanySettings(company);
+      setCompany({ legalName: saved.legalName ?? '', cif: saved.cif ?? '', ccc: saved.ccc ?? '' });
+      setCompanyFeedback({ type: 'success', text: 'Datos de empresa guardados.' });
+    } catch {
+      setCompanyFeedback({ type: 'error', text: 'No se pudieron guardar los datos de empresa.' });
+    } finally {
+      setSavingCompany(false);
+    }
+  };
 
   const handleCreate = async (event: FormEvent) => {
     event.preventDefault();
@@ -131,6 +185,28 @@ export default function UsersPage() {
           value={form.weeklyHours ?? ''}
           onChange={(e) => setForm({ ...form, weeklyHours: e.target.value ? Number(e.target.value) : undefined })}
         />
+        <select
+          value={form.contractType ?? ''}
+          onChange={(e) => setForm({ ...form, contractType: (e.target.value || null) as ContractType | null })}
+        >
+          <option value="">Tipo de contrato</option>
+          <option value="full_time">Jornada completa</option>
+          <option value="part_time">Tiempo parcial</option>
+        </select>
+        <input
+          type="text"
+          placeholder="NIF (opcional)"
+          maxLength={20}
+          value={form.nif ?? ''}
+          onChange={(e) => setForm({ ...form, nif: e.target.value })}
+        />
+        <input
+          type="text"
+          placeholder="NAF (opcional)"
+          maxLength={20}
+          value={form.naf ?? ''}
+          onChange={(e) => setForm({ ...form, naf: e.target.value })}
+        />
         <button type="submit" disabled={submitting}>
           {submitting ? 'Creando...' : 'Crear usuario'}
         </button>
@@ -145,6 +221,9 @@ export default function UsersPage() {
               <th>Nombre</th>
               <th>Rol</th>
               <th>Horas/sem</th>
+              <th>Contrato</th>
+              <th>NIF</th>
+              <th>NAF</th>
               <th>Estado</th>
               <th>Tema</th>
               <th>Creado</th>
@@ -178,6 +257,37 @@ export default function UsersPage() {
                     onBlur={(e) => changeWeeklyHours(user, e.target.value)}
                   />
                 </td>
+                <td>
+                  <select
+                    value={user.contractType ?? ''}
+                    disabled={pendingId === user.id}
+                    onChange={(e) => saveField(user, { contractType: (e.target.value || null) as ContractType | null })}
+                  >
+                    <option value="">—</option>
+                    <option value="full_time">Completa</option>
+                    <option value="part_time">Parcial</option>
+                  </select>
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="id-field-input"
+                    maxLength={20}
+                    defaultValue={user.nif ?? ''}
+                    disabled={pendingId === user.id}
+                    onBlur={(e) => changeIdField(user, 'nif', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="id-field-input"
+                    maxLength={20}
+                    defaultValue={user.naf ?? ''}
+                    disabled={pendingId === user.id}
+                    onBlur={(e) => changeIdField(user, 'naf', e.target.value)}
+                  />
+                </td>
                 <td>{user.active ? 'Activo' : 'Inactivo'}</td>
                 <td className="theme-cell">
                   {user.theme === 'dark' ? <MoonIcon /> : <SunIcon />}
@@ -197,6 +307,46 @@ export default function UsersPage() {
           </tbody>
         </table>
       </div>
+
+      <section className="company-settings">
+        <h3>Datos de empresa</h3>
+        <p className="hint">Aparecen en la cabecera del registro de jornada que se exporta desde Fichajes.</p>
+        <form className="company-settings-form" onSubmit={saveCompany}>
+          <label className="modal-field">
+            Nombre o razón social
+            <input
+              type="text"
+              maxLength={120}
+              value={company.legalName ?? ''}
+              onChange={(e) => setCompany({ ...company, legalName: e.target.value })}
+            />
+          </label>
+          <label className="modal-field">
+            CIF
+            <input
+              type="text"
+              maxLength={20}
+              value={company.cif ?? ''}
+              onChange={(e) => setCompany({ ...company, cif: e.target.value })}
+            />
+          </label>
+          <label className="modal-field">
+            C.C.C.
+            <input
+              type="text"
+              maxLength={30}
+              value={company.ccc ?? ''}
+              onChange={(e) => setCompany({ ...company, ccc: e.target.value })}
+            />
+          </label>
+          <button type="submit" className="modal-save" disabled={savingCompany}>
+            {savingCompany ? 'Guardando...' : 'Guardar'}
+          </button>
+        </form>
+        {companyFeedback && (
+          <div className={`feedback ${companyFeedback.type === 'error' ? 'feedback-error' : ''}`}>{companyFeedback.text}</div>
+        )}
+      </section>
     </div>
   );
 }

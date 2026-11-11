@@ -16,6 +16,7 @@ import {
   QrIcon,
   SunIcon,
   TagIcon,
+  TimesheetIcon,
   UsersIcon,
 } from './icons';
 
@@ -38,6 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Panel de control', icon: ChartIcon, roles: ['admin', 'employee'] },
   { to: '/history', label: 'Historial', icon: ClockIcon, roles: ['admin', 'employee'] },
   { to: '/my-schedule', label: 'Mi horario', icon: CalendarCheckIcon, roles: ['admin', 'employee'] },
+  { to: '/fichajes', label: 'Fichajes', icon: TimesheetIcon, roles: ['admin', 'employee'] },
   { to: '/products', label: 'Productos', icon: TagIcon, roles: ['admin', 'kiosk'] },
   { to: '/kiosk', label: 'Fichar', icon: QrIcon, roles: ['admin', 'kiosk'] },
   { to: '/schedules', label: 'Horarios', icon: CalendarIcon, roles: ['admin'] },

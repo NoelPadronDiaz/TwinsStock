@@ -56,6 +56,12 @@ export function formatShortDate(date: string): string {
   return `${d}/${m}`;
 }
 
+// Duration as 'h:mm' (e.g. 4:05), the format of the Registro diario de jornada.
+export function formatHoursMinutes(totalMinutes: number): string {
+  const minutes = Math.round(totalMinutes);
+  return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
 export function formatMinutes(totalMinutes: number): string {
   const minutes = Math.round(totalMinutes);
   const hours = Math.floor(minutes / 60);

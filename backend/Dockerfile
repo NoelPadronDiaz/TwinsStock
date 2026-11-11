@@ -13,7 +13,7 @@ COPY nest-cli.json tsconfig.json tsconfig.build.json ./
 
 # --- dev: only src/ is bind-mounted by docker-compose.yml, see above ---
 FROM base AS dev
-EXPOSE 3000
+EXPOSE 3003
 CMD ["npm", "run", "start:dev"]
 
 # --- build: compile to dist/ ---

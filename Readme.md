@@ -188,11 +188,16 @@ cp .env.docker.example .env.docker
 docker compose --env-file .env.docker up --build
 ```
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:3000/api`
+- Frontend: `http://localhost:5175`
+- Backend: `http://localhost:3003/api`
 - Postgres: `localhost:5434` (usuario/contraseña/base `twinsstock`) — no en el
   5432 estándar, por si ya tienes otro Postgres (local u otro proyecto en
   Docker) usándolo.
+
+Los puertos del host del frontend y el backend (5175/3003) son distintos de
+los de `npm run dev`/`start:dev` fuera de Docker (5173/3000), para que ambos
+flujos, o un `vercel dev`, puedan convivir sin chocar. Dentro de los
+contenedores siguen siendo 5173 y 3000.
 
 El login funciona con el admin que crea el seed (`ADMIN_USERNAME`/
 `ADMIN_PASSWORD` de `.env.docker`). Editar un fichero en `backend/src` o en
@@ -247,7 +252,7 @@ ruta al contenedor del backend — así el móvil nunca necesita conocer la IP
 del backend ni se toca CORS.
 
 1. Averigua la IP de tu PC en la red local (`ipconfig` → "Dirección IPv4").
-2. Con `docker compose up` ya corriendo, abre `http://<esa-ip>:5173` desde el
+2. Con `docker compose up` ya corriendo, abre `http://<esa-ip>:5175` desde el
    móvil.
 
 ### Comandos habituales

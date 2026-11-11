@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { ApplyTemplateDto } from './dto/apply-template.dto';
+import { ApplyWeekTemplateDto } from './dto/apply-week-template.dto';
 import { CopyWeekDto } from './dto/copy-week.dto';
 import { CreateShiftDto } from './dto/create-shift.dto';
 import { UpdateShiftDto } from './dto/update-shift.dto';
@@ -38,9 +38,9 @@ export class ShiftsController {
     await this.shiftsService.remove(id);
   }
 
-  @Post('apply-template')
-  applyTemplate(@Body() dto: ApplyTemplateDto) {
-    return this.shiftsService.applyTemplate(dto);
+  @Post('apply-week-template')
+  applyWeekTemplate(@Body() dto: ApplyWeekTemplateDto) {
+    return this.shiftsService.applyWeekTemplate(dto);
   }
 
   @Post('copy-week')

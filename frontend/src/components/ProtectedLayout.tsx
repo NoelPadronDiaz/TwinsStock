@@ -13,12 +13,15 @@ import {
   MoonIcon,
   MoreIcon,
   PowerIcon,
+  QrIcon,
   SunIcon,
   TagIcon,
   UsersIcon,
 } from './icons';
 
-const ALL_ROLES: UserRole[] = ['admin', 'employee'];
+// Operational day-to-day screens: open to every authenticated role,
+// including the shared kiosk device.
+const OPERATIONAL_ROLES: UserRole[] = ['admin', 'employee', 'kiosk'];
 
 interface NavItem {
   to: string;
@@ -29,13 +32,14 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/', end: true, label: 'Registrar consumo', icon: BoxIcon, roles: ALL_ROLES },
-  { to: '/stock', label: 'Control de stock', icon: GridIcon, roles: ALL_ROLES },
-  { to: '/cesta', label: 'Cesta de la compra', icon: CartIcon, roles: ALL_ROLES },
+  { to: '/', end: true, label: 'Registrar consumo', icon: BoxIcon, roles: OPERATIONAL_ROLES },
+  { to: '/stock', label: 'Control de stock', icon: GridIcon, roles: OPERATIONAL_ROLES },
+  { to: '/cesta', label: 'Cesta de la compra', icon: CartIcon, roles: OPERATIONAL_ROLES },
   { to: '/dashboard', label: 'Panel de control', icon: ChartIcon, roles: ['admin', 'employee'] },
-  { to: '/history', label: 'Historial', icon: ClockIcon, roles: ALL_ROLES },
+  { to: '/history', label: 'Historial', icon: ClockIcon, roles: ['admin', 'employee'] },
   { to: '/my-schedule', label: 'Mi horario', icon: CalendarCheckIcon, roles: ['admin', 'employee'] },
-  { to: '/products', label: 'Productos', icon: TagIcon, roles: ['admin'] },
+  { to: '/products', label: 'Productos', icon: TagIcon, roles: ['admin', 'kiosk'] },
+  { to: '/kiosk', label: 'Fichar', icon: QrIcon, roles: ['admin', 'kiosk'] },
   { to: '/schedules', label: 'Horarios', icon: CalendarIcon, roles: ['admin'] },
   { to: '/users', label: 'Usuarios', icon: UsersIcon, roles: ['admin'] },
 ];

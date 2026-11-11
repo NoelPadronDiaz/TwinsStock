@@ -6,8 +6,10 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { CategoriesModule } from './categories/categories.module';
+import { ClockModule } from './clock/clock.module';
 import { ConsumablesModule } from './consumables/consumables.module';
 import { ConsumptionLogsModule } from './consumption-logs/consumption-logs.module';
+import { HealthModule } from './health/health.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { ShoppingListModule } from './shopping-list/shopping-list.module';
 import { StatsModule } from './stats/stats.module';
@@ -42,8 +44,10 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     CategoriesModule,
+    ClockModule,
     ConsumablesModule,
     ConsumptionLogsModule,
+    HealthModule,
     SchedulesModule,
     ShoppingListModule,
     StatsModule,

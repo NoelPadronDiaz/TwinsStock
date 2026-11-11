@@ -51,6 +51,11 @@ export function getMonthWeeks(year: number, month: number): string[][] {
   return weeks;
 }
 
+export function formatShortDate(date: string): string {
+  const [, m, d] = date.split('-');
+  return `${d}/${m}`;
+}
+
 export function formatMinutes(totalMinutes: number): string {
   const minutes = Math.round(totalMinutes);
   const hours = Math.floor(minutes / 60);

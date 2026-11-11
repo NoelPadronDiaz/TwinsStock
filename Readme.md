@@ -82,6 +82,14 @@ La app queda en `http://localhost:5173`.
   como consumo — para eso está "Registrar consumo".
 - **Panel de control** (`/dashboard`): totales por producto, tendencia en el
   tiempo (día/semana/mes) y tabla de datos, con filtros de rango de fechas.
+- **Fichaje por QR**: el rol `kiosk` (cuenta de un dispositivo compartido,
+  no de una persona) muestra en `/kiosk` un código QR que se renueva cada
+  30s. Cualquier empleado o admin lo escanea con su propio móvil (ya con
+  sesión iniciada) para abrir `/clock`, que registra automáticamente su
+  entrada o salida. `kiosk` no puede fichar ni ver Panel de control,
+  Usuarios u Horarios — solo las pantallas operativas del día a día
+  (Registrar consumo, Control de stock, Cesta de la compra, Productos) y
+  la del QR.
 
 ## API
 
@@ -103,6 +111,8 @@ Todas las rutas requieren un JWT (`Authorization: Bearer <token>`) **salvo**
 | GET | `/api/consumption-logs` | Lista registros recientes (filtros: `from`, `to`, `consumableId`, `limit`) |
 | GET | `/api/stats/summary` | Totales por producto en un rango (`from`, `to`) |
 | GET | `/api/stats/timeseries` | Serie temporal por producto (`from`, `to`, `groupBy=day\|week\|month`) |
+| GET | `/api/clock/token` | Token del QR de fichaje, caduca a los 60s (solo `admin`/`kiosk`) |
+| POST | `/api/clock/punch` | Registra entrada/salida de quien llama (`token` del QR); `kiosk` no puede fichar |
 
 ## Despliegue en Vercel
 
@@ -131,6 +141,10 @@ mismo repositorio de Git, cada uno con su propio "Root Directory".
      `https://twinsstock.vercel.app`).
    - `JWT_SECRET`: una cadena aleatoria larga (p. ej. `openssl rand -hex 32`).
      **Imprescindible cambiarla** del valor de ejemplo.
+   - `CLOCK_QR_SECRET`: otra cadena aleatoria larga, distinta de
+     `JWT_SECRET`, para el fichaje por QR. `JWT_KIOSK_EXPIRES_IN` es
+     opcional (por defecto `30d`, la duración de sesión de las cuentas
+     `kiosk`).
    - `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_NAME`: credenciales del
      admin inicial. Solo se usan la primera vez (tabla de usuarios vacía);
      después, cambia la contraseña desde la propia app.
@@ -148,10 +162,165 @@ Si al desplegar da `404: NOT_FOUND` en todas las rutas, casi seguro es el
 Root Directory sin configurar (Settings → General → Root Directory, en cada
 proyecto) — es la causa más común.
 
+## Docker
+
+Alternativa a Neon + `npm run dev` para desarrollar y para desplegar en un
+servidor propio. **No sustituye a Vercel**: son dos formas de desplegar
+independientes entre sí, y Vercel sigue funcionando exactamente igual que
+antes (mismos `vercel.json`, mismo `backend/api/index.ts`).
+
+### Desarrollo (`docker-compose.yml`)
+
+Levanta Postgres + backend + frontend con recarga en caliente, sin tocar
+Neon — cada uno con su propia base de datos local en un volumen de Docker.
+Solo se monta en caliente `backend/src` y `frontend/src` (no todo el
+proyecto): así `backend/.env`/`frontend/.env` — con las credenciales reales
+de Neon que usas fuera de Docker — nunca llegan al contenedor. Si tocas
+`vite.config.ts`, `tsconfig.json` o `package.json`, hace falta reconstruir
+la imagen (`docker compose up --build`).
+
+Requisitos: Docker Desktop.
+
+```bash
+cp .env.docker.example .env.docker
+# edita JWT_SECRET y ADMIN_PASSWORD en .env.docker
+
+docker compose --env-file .env.docker up --build
+```
+
+- Frontend: `http://localhost:5175`
+- Backend: `http://localhost:3003/api`
+- Postgres: `localhost:5434` (usuario/contraseña/base `twinsstock`) — no en el
+  5432 estándar, por si ya tienes otro Postgres (local u otro proyecto en
+  Docker) usándolo.
+
+Los puertos del host del frontend y el backend (5175/3003) son distintos de
+los de `npm run dev`/`start:dev` fuera de Docker (5173/3000), para que ambos
+flujos, o un `vercel dev`, puedan convivir sin chocar. Dentro de los
+contenedores siguen siendo 5173 y 3000.
+
+El login funciona con el admin que crea el seed (`ADMIN_USERNAME`/
+`ADMIN_PASSWORD` de `.env.docker`). Editar un fichero en `backend/src` o en
+`frontend/src` recarga el servicio correspondiente solo.
+
+### Producción (`docker-compose.prod.yml`)
+
+Imágenes optimizadas (backend: solo `dist/` + deps de producción, usuario no
+root; frontend: estáticos servidos por nginx), pensadas para un servidor con
+Docker.
+
+```bash
+cp .env.prod.example .env.prod
+# rellena DATABASE_URL (Neon u otra Postgres), CORS_ORIGIN, JWT_SECRET,
+# ADMIN_PASSWORD y APP_PORT en .env.prod
+
+docker compose -f docker-compose.prod.yml --env-file .env.prod up --build
+```
+
+La app queda en `http://localhost:${APP_PORT:-8080}`. nginx sirve el
+frontend, hace fallback a `index.html` para las rutas de React Router, y
+reenvía `/api/` al backend (que no publica puerto propio: solo es accesible
+desde dentro de la red de Compose).
+
+Si falta alguna variable obligatoria (`DATABASE_URL`, `JWT_SECRET`,
+`CORS_ORIGIN`, `ADMIN_PASSWORD`), Compose se niega a arrancar con un mensaje
+indicando cuál falta, en vez de arrancar a medias.
+
+**Probar producción en local sin tocar Neon**: el servicio `db` está detrás
+de un profile opcional (`local-db`):
+
+```bash
+docker compose -f docker-compose.prod.yml --profile local-db --env-file .env.prod up --build
+```
+
+Pon en `.env.prod`:
+
+```
+DATABASE_URL=postgresql://twinsstock:twinsstock@db:5432/twinsstock
+DB_SSL=false
+```
+
+(Postgres local no habla SSL; `DB_SSL` solo hace falta ponerlo a `false` en
+este caso — contra Neon se deja sin definir y usa `true` por defecto.)
+
+### Abrir la app desde el móvil (misma red)
+
+Pensado para probar flujos que necesitan un segundo dispositivo (p. ej. el
+fichaje por QR). En **desarrollo**, el frontend llama a `/api` en vez de a
+`http://localhost:3000`, y es el propio servidor de Vite quien reenvía esa
+ruta al contenedor del backend — así el móvil nunca necesita conocer la IP
+del backend ni se toca CORS.
+
+1. Averigua la IP de tu PC en la red local (`ipconfig` → "Dirección IPv4").
+2. Con `docker compose up` ya corriendo, abre `http://<esa-ip>:5175` desde el
+   móvil.
+
+### Comandos habituales
+
+| Acción | Comando |
+|---|---|
+| Levantar (dev) | `docker compose --env-file .env.docker up` |
+| Levantar en segundo plano | añade `-d` al anterior |
+| Parar | `docker compose down` |
+| Parar y borrar también los volúmenes (incluida la BD) | `docker compose down -v` |
+| Ver logs de un servicio | `docker compose logs -f backend` |
+| Traer código nuevo (`git pull`, cambio de rama) | nada — `src/` está montado en caliente, se recarga solo |
+| Nueva dependencia añadida a `package.json` | `docker compose exec backend npm install` (o `frontend`) |
+| `docker-compose.yml` cambiado (variable de entorno nueva, etc.) | `docker compose up -d backend` (recrea el contenedor, no hace falta `--build`) |
+| `Dockerfile` o ficheros fuera de `src/` cambiados (`vite.config.ts`, `tsconfig.json`...) | `docker compose up --build backend` |
+| Abrir una shell en un contenedor | `docker compose exec backend sh` |
+| Conectarse a Postgres (dev) | `docker compose exec db psql -U twinsstock -d twinsstock` (o un cliente externo a `localhost:5434`) |
+| Borrar la base de datos de desarrollo (empezar de cero) | `docker compose down -v` (vuelve a sembrar el admin en el próximo `up`) |
+
+Todo lo anterior aplica igual al compose de producción añadiendo
+`-f docker-compose.prod.yml --env-file .env.prod`.
+
+**Por qué `--build` solo no basta para una dependencia nueva:** `node_modules`
+vive en un volumen con nombre (`backend_node_modules`/`frontend_node_modules`),
+no en el `src/` montado — así que, aunque reconstruyas la imagen, el
+contenedor sigue arrancando con el volumen viejo por encima, tapando el
+`node_modules` recién instalado en la imagen. Instalar directamente dentro
+del contenedor (`docker compose exec ... npm install`) escribe en ese mismo
+volumen y no hace falta nada más.
+
+### Variables de entorno
+
+**Desarrollo** (`.env.docker`):
+
+| Variable | Obligatoria | Notas |
+|---|---|---|
+| `JWT_SECRET` | Sí | Cualquier cadena en local |
+| `ADMIN_USERNAME` | No (`admin` por defecto) | |
+| `ADMIN_PASSWORD` | Sí | Solo se usa si la tabla de usuarios está vacía |
+| `CLOCK_QR_SECRET` | No (valor de ejemplo ya puesto) | Para el fichaje por QR, cualquier cadena en local |
+
+Las credenciales de Postgres y las URLs internas están fijas en
+`docker-compose.yml` (`twinsstock`/`twinsstock`/`twinsstock`, `DB_HOST=db`) —
+no son secretos reales, no hace falta configurarlas.
+
+**Producción** (`.env.prod`):
+
+| Variable | Obligatoria | Notas |
+|---|---|---|
+| `DATABASE_URL` | Sí | Neon u otra Postgres; con `local-db` apunta a `db` |
+| `CORS_ORIGIN` | Sí | Origen real desde el que se sirve el frontend |
+| `JWT_SECRET` | Sí | Cadena aleatoria larga, distinta a la de desarrollo |
+| `ADMIN_PASSWORD` | Sí | Solo se usa si la tabla de usuarios está vacía |
+| `CLOCK_QR_SECRET` | Sí | Para el fichaje por QR, cadena aleatoria distinta a `JWT_SECRET` |
+| `ADMIN_USERNAME` | No (`admin`) | |
+| `ADMIN_NAME` | No (`Administrador`) | |
+| `JWT_EXPIRES_IN` | No (`12h`) | |
+| `JWT_KIOSK_EXPIRES_IN` | No (`30d`) | Duración de la sesión de las cuentas `kiosk` |
+| `APP_PORT` | No (`8080`) | Puerto del host para el frontend |
+| `DB_SSL` | No (`true`) | Pon `false` solo con el profile `local-db` |
+
 ## Notas
 
 - El esquema de la base de datos se sincroniza automáticamente
   (`synchronize: true`) para simplificar el desarrollo inicial. Antes de pasar
-  a producción, conviene sustituirlo por migraciones de TypeORM.
+  a producción, conviene sustituirlo por migraciones de TypeORM. Mientras
+  tanto, el entorno de desarrollo con Docker (base de datos propia, no Neon)
+  es el sitio para probar cambios de esquema antes de que lleguen a
+  producción.
 - Añadir nuevos consumibles se puede hacer vía `POST /api/consumables` (se
   puede exponer más adelante en la UI si hace falta gestionarlos ahí).

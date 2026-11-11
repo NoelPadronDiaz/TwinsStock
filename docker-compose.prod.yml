@@ -1,0 +1,75 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      target: prod
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL:?Define DATABASE_URL en .env.prod (Neon, u otra Postgres propia)}
+      CORS_ORIGIN: ${CORS_ORIGIN:?Define CORS_ORIGIN en .env.prod}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env.prod}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-12h}
+      JWT_KIOSK_EXPIRES_IN: ${JWT_KIOSK_EXPIRES_IN:-30d}
+      CLOCK_QR_SECRET: ${CLOCK_QR_SECRET:?Define CLOCK_QR_SECRET en .env.prod}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en .env.prod}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrador}
+      # Defaults to true, matching Neon. Only set DB_SSL=false in .env.prod if
+      # you point DATABASE_URL at the local-db profile below, which doesn't
+      # speak SSL (an empty-string override here would be read by the app as
+      # "set but falsy-ish", not "unset", so this needs a real default).
+      DB_SSL: ${DB_SSL:-true}
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/api/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  frontend:
+    build:
+      context: ./frontend
+      target: prod
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - '${APP_PORT:-8080}:80'
+    logging:
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # Optional, for testing this whole prod stack locally without touching
+  # Neon. Not started by default: `docker compose -f docker-compose.prod.yml
+  # --profile local-db up`. Point DATABASE_URL at it in .env.prod, see Readme.
+  db:
+    image: postgres:17-alpine
+    profiles: ['local-db']
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: twinsstock
+      POSTGRES_PASSWORD: twinsstock
+      POSTGRES_DB: twinsstock
+    volumes:
+      - prod_local_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U twinsstock']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+volumes:
+  prod_local_db_data:

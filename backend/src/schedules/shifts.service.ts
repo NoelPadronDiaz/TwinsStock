@@ -1,14 +1,14 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { Between, EntityManager, Repository } from 'typeorm';
 import { BUSINESS_TIMEZONE } from '../common/business-time';
-import { ApplyTemplateDto } from './dto/apply-template.dto';
+import { ApplyWeekTemplateDto } from './dto/apply-week-template.dto';
 import { CopyWeekDto } from './dto/copy-week.dto';
 import { CreateShiftDto } from './dto/create-shift.dto';
 import { UpdateShiftDto } from './dto/update-shift.dto';
 import { addDays, enumerateDates, isoWeekday } from './schedule-date.util';
-import { ShiftTemplate } from './shift-template.entity';
 import { Shift } from './shift.entity';
+import { WeekTemplatesService } from './week-templates.service';
 
 export interface ShiftRangeResult {
   datesCreated: string[];
@@ -20,8 +20,7 @@ export class ShiftsService {
   constructor(
     @InjectRepository(Shift)
     private readonly shiftsRepository: Repository<Shift>,
-    @InjectRepository(ShiftTemplate)
-    private readonly templatesRepository: Repository<ShiftTemplate>,
+    private readonly weekTemplatesService: WeekTemplatesService,
   ) {}
 
   private assertValidRange(startTime: string, endTime: string) {
@@ -110,44 +109,47 @@ export class ShiftsService {
     }
   }
 
-  async applyTemplate(dto: ApplyTemplateDto): Promise<ShiftRangeResult> {
-    const templates = await this.templatesRepository.find({ where: { userId: dto.userId } });
-    const byWeekday = new Map<number, ShiftTemplate[]>();
-    for (const template of templates) {
-      const list = byWeekday.get(template.weekday) ?? [];
-      list.push(template);
-      byWeekday.set(template.weekday, list);
+  // "This week is now exactly this template": every shift of the employee
+  // in that Monday-Sunday week is replaced, including days the template
+  // leaves free — otherwise leftovers from whatever was there before (e.g.
+  // a previously applied template) would silently survive. Single days are
+  // tweaked afterwards with the normal per-day edit.
+  async applyWeekTemplate(dto: ApplyWeekTemplateDto) {
+    if (isoWeekday(dto.weekStart) !== 0) {
+      throw new BadRequestException('La semana debe empezar en lunes.');
     }
+    const template = await this.weekTemplatesService.findOneWithRows(dto.weekTemplateId);
+    const weekEnd = addDays(dto.weekStart, 6);
 
-    const datesCreated: string[] = [];
-    const datesSkipped: string[] = [];
+    return this.shiftsRepository.manager.transaction(async (manager) => {
+      const { affected } = await manager.delete(Shift, {
+        userId: template.userId,
+        date: Between(dto.weekStart, weekEnd),
+      });
 
-    await this.shiftsRepository.manager.transaction(async (manager) => {
-      for (const date of enumerateDates(dto.from, dto.to)) {
-        const dayTemplates = byWeekday.get(isoWeekday(date));
-        if (!dayTemplates || dayTemplates.length === 0) continue;
-
-        const existing = await manager.getRepository(Shift).count({ where: { userId: dto.userId, date } });
-        if (existing > 0) {
-          datesSkipped.push(date);
-          continue;
-        }
-
-        for (const template of dayTemplates) {
-          await manager.save(
+      const shifts = enumerateDates(dto.weekStart, weekEnd).flatMap((date) =>
+        template.rows
+          .filter((row) => row.weekday === isoWeekday(date))
+          .map((row) =>
             manager.create(Shift, {
-              userId: dto.userId,
+              userId: template.userId,
               date,
-              startTime: template.startTime,
-              endTime: template.endTime,
+              startTime: row.startTime,
+              endTime: row.endTime,
             }),
-          );
-        }
-        datesCreated.push(date);
+          ),
+      );
+      if (shifts.length > 0) {
+        await manager.save(shifts);
       }
-    });
 
-    return { datesCreated, datesSkipped };
+      return {
+        weekStart: dto.weekStart,
+        weekEnd,
+        shiftsRemoved: affected ?? 0,
+        shiftsCreated: shifts.length,
+      };
+    });
   }
 
   async copyWeek(dto: CopyWeekDto): Promise<ShiftRangeResult> {

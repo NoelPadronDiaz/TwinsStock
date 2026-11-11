@@ -1,5 +1,5 @@
-import { IsBoolean, IsIn, IsNumber, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
-import { UserRole, UserTheme } from '../user.entity';
+import { IsBoolean, IsIn, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ContractType, UserRole, UserTheme } from '../user.entity';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -28,4 +28,19 @@ export class UpdateUserDto {
   @Min(0)
   @Max(168)
   weeklyHours?: number;
+
+  // null clears the value.
+  @IsOptional()
+  @IsIn(['full_time', 'part_time'])
+  contractType?: ContractType | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  nif?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  naf?: string | null;
 }

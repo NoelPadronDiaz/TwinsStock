@@ -11,16 +11,17 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  // Admin-only endpoints are the only ones that return nif/naf.
   @Get()
   async findAll() {
-    const users = await this.usersService.findAll();
+    const users = await this.usersService.findAllWithPersonalData();
     return users.map((user) => this.usersService.toSafeUser(user));
   }
 
   @Post()
   async create(@Body() dto: CreateUserDto) {
     const user = await this.usersService.create(dto);
-    return this.usersService.toSafeUser(user);
+    return this.usersService.toSafeUser(await this.usersService.findOneWithPersonalData(user.id));
   }
 
   @Patch('me/theme')
@@ -32,7 +33,7 @@ export class UsersController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    const user = await this.usersService.update(id, dto);
-    return this.usersService.toSafeUser(user);
+    await this.usersService.update(id, dto);
+    return this.usersService.toSafeUser(await this.usersService.findOneWithPersonalData(id));
   }
 }

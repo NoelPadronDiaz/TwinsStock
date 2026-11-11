@@ -1134,3 +1134,159 @@ body {
   opacity: 0.6;
   cursor: default;
 }
+.modal-save.modal-danger {
+  background: var(--danger);
+  color: var(--danger-ink);
+}
+
+/* Users: NIF / NAF inputs and company settings */
+.users-page .stats-table .id-field-input {
+  width: 110px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+  text-transform: uppercase;
+}
+
+.company-settings {
+  margin-top: 32px;
+}
+
+.company-settings-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.company-settings-form .modal-field {
+  flex: 1 1 200px;
+}
+
+/* Fichajes */
+.time-entries-employee {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--chart-surface);
+  color: var(--primary-ink);
+  font-size: 14px;
+  max-width: 220px;
+}
+
+.time-entries-month {
+  min-width: 130px;
+  text-align: center;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.time-entries-table td {
+  vertical-align: top;
+}
+
+.time-entries-day {
+  white-space: nowrap;
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.time-entries-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.time-entries-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-entries-block {
+  min-width: 56px;
+  font-size: 12px;
+  color: var(--secondary-ink);
+}
+
+.time-entries-range {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.time-entries-minutes {
+  font-size: 12px;
+  color: var(--muted-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.time-entries-badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  color: var(--secondary-ink);
+}
+
+.time-entries-badge.pending {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.time-entries-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.time-entries-issue {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.time-entries-table tr.has-issues td:first-child {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.time-entries-total {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.time-entries-table tfoot th {
+  text-align: left;
+  color: var(--primary-ink);
+  font-weight: 700;
+}
+
+.time-entries-history {
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.time-entries-history h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.time-entries-history ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.time-entries-history-reason {
+  color: var(--secondary-ink);
+}

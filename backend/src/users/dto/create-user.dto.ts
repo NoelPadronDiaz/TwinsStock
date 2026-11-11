@@ -1,5 +1,5 @@
-import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
-import { UserRole } from '../user.entity';
+import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ContractType, UserRole } from '../user.entity';
 
 export class CreateUserDto {
   @IsString()
@@ -22,4 +22,18 @@ export class CreateUserDto {
   @Min(0)
   @Max(168)
   weeklyHours?: number;
+
+  @IsOptional()
+  @IsIn(['full_time', 'part_time'])
+  contractType?: ContractType | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  nif?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  naf?: string | null;
 }

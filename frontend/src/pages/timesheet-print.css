@@ -1,0 +1,199 @@
+/* Printable "Registro diario de jornada": an A4 sheet in black and white that
+   mirrors docs/Modelo-de-Registro-Jornada.pdf. Colors are fixed (not theme
+   tokens) because this is paper, not app UI. */
+
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+.timesheet-print {
+  min-height: 100vh;
+  padding: 24px 16px;
+  background: #e6e6e6;
+  color: #000;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.timesheet-toolbar {
+  max-width: 210mm;
+  margin: 0 auto 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.timesheet-toolbar button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.timesheet-sheet {
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 10mm;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  overflow-x: auto;
+}
+
+.ts-table {
+  width: 100%;
+  min-width: 170mm;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 8pt;
+  border: 1.5px solid #000;
+}
+
+.ts-table th,
+.ts-table td {
+  border: 0.75px solid #000;
+  padding: 0 3px;
+  height: 4.6mm;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ts-title {
+  height: 7mm !important;
+  background: #000;
+  color: #fff;
+  font-size: 13pt;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.ts-band {
+  background: #d0d0d0;
+  font-size: 8pt;
+  text-align: center;
+}
+
+.ts-table .ts-label {
+  background: #ececec;
+  font-size: 7.5pt;
+  text-align: left;
+  white-space: normal;
+  line-height: 1.1;
+}
+
+.ts-value {
+  font-size: 8pt;
+}
+
+.ts-head th {
+  background: #d0d0d0;
+  font-size: 8.5pt;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.15;
+}
+
+.ts-subhead th {
+  font-size: 7.5pt;
+  background: #ececec;
+}
+
+.ts-row td {
+  height: 5.1mm;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ts-row .ts-day {
+  text-align: left;
+}
+
+.ts-total th {
+  background: #d0d0d0;
+  text-align: right;
+  font-size: 8.5pt;
+}
+
+.ts-total td {
+  background: #d0d0d0;
+  text-align: center;
+  font-weight: 700;
+}
+
+.ts-signatures {
+  display: flex;
+  justify-content: space-around;
+  gap: 12mm;
+  margin: 6mm 0 4mm;
+}
+
+.ts-signature {
+  width: 68mm;
+  height: 24mm;
+  border: 1.5px solid #000;
+}
+
+.ts-signature-title {
+  background: #000;
+  color: #fff;
+  font-size: 8.5pt;
+  font-weight: 700;
+  text-align: center;
+  padding: 1mm 0;
+}
+
+.ts-legal p {
+  margin: 0 0 2mm;
+  font-size: 6.5pt;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: justify;
+}
+
+.timesheet-message {
+  max-width: 640px;
+  margin: 48px auto;
+  padding: 0 16px;
+  color: var(--primary-ink);
+}
+
+@media print {
+  body:has(.timesheet-print) {
+    background: #fff;
+  }
+
+  .timesheet-print {
+    min-height: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .timesheet-toolbar {
+    display: none;
+  }
+
+  .timesheet-sheet {
+    width: auto;
+    min-height: 0;
+    padding: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .ts-title,
+  .ts-band,
+  .ts-label,
+  .ts-head th,
+  .ts-total th,
+  .ts-total td,
+  .ts-signature-title {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

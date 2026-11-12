@@ -288,6 +288,49 @@ body {
   font-size: 14px;
 }
 
+.login-password {
+  position: relative;
+  display: flex;
+}
+
+.login-password input {
+  flex: 1;
+  min-width: 0;
+  padding-right: 42px;
+}
+
+/* Edge draws its own reveal button; ours replaces it. */
+.login-password input::-ms-reveal {
+  display: none;
+}
+
+.login-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--secondary-ink);
+  cursor: pointer;
+}
+
+.login-password-toggle:hover {
+  color: var(--primary-ink);
+}
+
+.login-password-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 .login-error {
   padding: 8px 12px;
   border-radius: 8px;
